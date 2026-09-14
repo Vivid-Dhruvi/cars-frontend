@@ -51,7 +51,7 @@ export default function UnlockedReport({ userInfo, analysisResults, activeInspec
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     window.open(`${API_BASE}/api/reports/${inspId}/pdf`, '_blank');
     toast.success('Official PDF Certificate generated!');
-  };
+  }; 
 
   return (
     <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-sm flex flex-col gap-6">
@@ -59,7 +59,7 @@ export default function UnlockedReport({ userInfo, analysisResults, activeInspec
 
 
       {/* Payment Success Banner */}
-      <div className="bg-gradient-to-r from-emerald-900 to-slate-900 text-white rounded-2xl p-4 sm:p-6 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 shadow-md">
+      <div className="bg-linear-to-r from-emerald-900 to-slate-900 text-white rounded-2xl p-4 sm:p-6 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 shadow-md">
         <div className="flex min-w-0 flex-1 flex-col sm:flex-row sm:items-center gap-3">
           <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-400 flex items-center justify-center shrink-0">
             <CheckCircle2 className="w-7 h-7" />
