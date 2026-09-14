@@ -109,7 +109,6 @@ export default function PhotoChecklist({
               <input 
                 type="file" 
                 accept="image/*" 
-                capture="environment"
                 className="hidden" 
                 onChange={(e) => e.target.files?.[0] && handleFileUpload(item.id, e.target.files[0])} 
               />
