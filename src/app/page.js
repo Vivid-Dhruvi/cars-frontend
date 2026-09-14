@@ -34,15 +34,48 @@ export default function App() {
   const [activeInspectionId, setActiveInspectionId] = useState(null);
   const [analysisResults, setAnalysisResults] = useState(null);
 
+  // Helper to compress high-res phone camera photos so Vercel 4.5MB payload limit is never exceeded
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 1280; // Ideal resolution for Gemini Vision AI
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+          resolve(compressedBase64);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   // Real backend file upload handler & Base64 encoder for Gemini AI
   const handleFileUpload = async (id, file) => {
     if (!file) return;
     setIsUploading(true);
 
-    // Convert file to base64 for real Gemini Vision API payload
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64Data = e.target.result;
+    try {
+      const base64Data = await compressImage(file);
       
       const formData = new FormData();
       formData.append('photo', file);
@@ -58,19 +91,19 @@ export default function App() {
           ...prev, 
           [id]: { url: base64Data, filename: data.filename || `IMAGE_${id}` } 
         }));
-        toast.success(`IMAGE_${id} captured & ready for Gemini AI analysis!`);
+        toast.success(`IMAGE_${id} captured & compressed for Gemini AI!`);
       } catch (err) {
-        console.error('Upload Error:', err);
         setPhotos(prev => ({ 
           ...prev, 
           [id]: { url: base64Data, filename: `IMAGE_${id}` } 
         }));
         toast.success(`IMAGE_${id} stored locally for AI analysis.`);
-      } finally {
-        setIsUploading(false);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Compress Error:', err);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   // Real API call to trigger AI inspection
