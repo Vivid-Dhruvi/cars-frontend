@@ -24,3 +24,22 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+button, a, input, [tabindex] {
+  &:focus-visible {
+    outline: 3px solid #0284c7;
+    outline-offset: 3px;
+  }
+}
+
+.damage-dialog::backdrop {
+  background: rgb(2 6 23 / 85%);
+  backdrop-filter: blur(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

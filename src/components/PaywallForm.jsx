@@ -12,7 +12,7 @@ export default function PaywallForm({
   setCurrentStep 
 }) {
   return (
-    <div className="max-w-md mx-auto bg-white rounded-3xl p-6 border border-slate-200 shadow-md flex flex-col gap-5">
+    <div className="max-w-md mx-auto bg-white rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-md flex flex-col gap-5">
       <div className="text-center">
         <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-100 text-sky-600 flex items-center justify-center mx-auto mb-3">
           <CreditCard className="w-6 h-6" />
@@ -49,9 +49,9 @@ export default function PaywallForm({
         className="flex flex-col gap-4"
       >
         <div>
-          <label className="text-xs font-bold text-slate-700 block mb-1">Your Full Name</label>
+          <label htmlFor="report-name" className="text-xs font-bold text-slate-700 block mb-1">Your Full Name</label>
           <input 
-            type="text"
+            id="report-name" autoComplete="name" type="text"
             required
             placeholder="e.g. John Doe"
             value={userInfo.name}
@@ -61,9 +61,9 @@ export default function PaywallForm({
         </div>
 
         <div>
-          <label className="text-xs font-bold text-slate-700 block mb-1">Email Address (for PDF Delivery)</label>
+          <label htmlFor="report-email" className="text-xs font-bold text-slate-700 block mb-1">Email Address (for PDF Delivery)</label>
           <input 
-            type="email"
+            id="report-email" autoComplete="email" type="email"
             required
             placeholder="e.g. john@example.com"
             value={userInfo.email}
@@ -72,10 +72,10 @@ export default function PaywallForm({
           />
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between my-1">
+        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3 my-1">
           <div>
             <span className="font-bold text-xs text-slate-900 block">Inspection Report Unlock</span>
-            <span className="text-[11px] text-slate-500">Includes PDF Download + Verification Link</span>
+            <span className="text-xs text-slate-500">Includes PDF Download + Verification Link</span>
           </div>
           <span className="font-black text-lg text-slate-900">$3.00</span>
         </div>
@@ -85,7 +85,7 @@ export default function PaywallForm({
           <div className="grid grid-cols-3 gap-2">
             <button 
               type="button" 
-              className="p-3 rounded-xl border border-sky-500 bg-sky-50 text-slate-900 font-bold text-[11px] flex flex-col items-center gap-1 shadow-2xs"
+              className="p-3 rounded-xl border border-sky-500 bg-sky-50 text-slate-900 font-bold text-xs flex flex-col items-center gap-1 shadow-2xs"
             >
               <CreditCard className="w-4 h-4 text-sky-600" />
               iCredit
@@ -93,7 +93,7 @@ export default function PaywallForm({
 
             <button 
               type="button" 
-              className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-semibold text-[11px] flex flex-col items-center gap-1 hover:bg-slate-100"
+              className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-semibold text-xs flex flex-col items-center gap-1 hover:bg-slate-100"
             >
               <span className="font-black italic text-blue-700">P</span>
               PayPal
@@ -101,7 +101,7 @@ export default function PaywallForm({
 
             <button 
               type="button" 
-              className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-semibold text-[11px] flex flex-col items-center gap-1 hover:bg-slate-100"
+              className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-semibold text-xs flex flex-col items-center gap-1 hover:bg-slate-100"
             >
               <span></span>
               Apple / Google
@@ -109,7 +109,7 @@ export default function PaywallForm({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-[11px] text-slate-500 bg-sky-50/50 p-3 rounded-xl border border-sky-100">
+        <div className="flex items-center gap-2 text-xs text-slate-500 bg-sky-50/50 p-3 rounded-xl border border-sky-100">
           <Lock className="w-4 h-4 text-sky-600 shrink-0" />
           <span>Secured via iCredit (CarInsuRent Gateway), PayPal, Apple Pay, & Cards.</span>
         </div>

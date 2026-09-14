@@ -1,37 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { ArrowLeft, Lock, ArrowRight } from 'lucide-react';
-import { toast } from 'sonner';
 
-// Helper function to resolve exact uploaded photo src for a finding, with fallback to user's first uploaded photo
-const getUploadedPhotoSrc = (item, photos) => {
-  if (!photos || typeof photos !== 'object') return null;
-
-  const uploadedUrls = Object.values(photos)
-    .filter(Boolean)
-    .map(p => (typeof p === 'object' ? p?.url : p))
-    .filter(url => url && typeof url === 'string');
-
-  const defaultUserPhoto = uploadedUrls[0] || null;
-
-  const suppImages = item?.supporting_images || [];
-  for (const imgKey of suppImages) {
-    if (!imgKey) continue;
-    const digits = imgKey.replace(/\D/g, '');
-    if (!digits) continue;
-    const padded = digits.padStart(2, '0');
-    const unpadded = parseInt(digits, 10).toString();
-
-    const matched = photos[imgKey] || photos[digits] || photos[padded] || photos[unpadded] || photos[`IMAGE_${padded}`] || photos[`IMAGE_${unpadded}`];
-    if (matched) {
-      const src = typeof matched === 'object' ? matched.url : matched;
-      if (src) return src;
-    }
-  }
-
-  return defaultUserPhoto;
-};
+import DamagePhotoDialog from './DamagePhotoDialog';
+import { getFindingEvidence } from './findingEvidence.mjs';
 
 // Helper function to guarantee vehicle part text label matches the exact photo angle slot
 const getSanitizedVehiclePart = (item) => {
@@ -84,67 +57,18 @@ export default function CarMapResults({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Interactive Bounding Box Modal */}
-      {activeBoxModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 md:p-6 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-4 md:p-6 border border-slate-200 shadow-2xl relative flex flex-col gap-4 max-h-[92vh]">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="font-extrabold text-base md:text-lg text-slate-900 capitalize">
-                  {getSanitizedVehiclePart(activeBoxModal.item)} Damage Box
-                </h3>
-                <p className="text-[11px] md:text-xs text-slate-500 capitalize">
-                  {activeBoxModal.item.damage_type?.replace(/_/g, ' ')} • Bounding Box: [{activeBoxModal.box.join(', ')}]
-                </p>
-              </div>
-              <button 
-                onClick={() => setActiveBoxModal(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 flex items-center justify-center cursor-pointer shrink-0"
-              >
-                ✕
-              </button>
-            </div>
+      {activeBoxModal && <DamagePhotoDialog item={activeBoxModal.item} photos={photos} title={getSanitizedVehiclePart(activeBoxModal.item)} onClose={() => setActiveBoxModal(null)} />}
 
-            {/* Photo Container maintaining natural aspect ratio */}
-            <div className="relative w-full aspect-4/3 max-h-[55vh] rounded-2xl overflow-hidden bg-slate-950 border border-slate-200 flex items-center justify-center">
-              <img src={activeBoxModal.displaySrc} alt="Damage bounding box" className="w-full h-full object-contain" />
-              
-              {/* Animated Bounding Box Overlay */}
-              <div 
-                className="absolute border-3 border-red-500 bg-red-500/20 rounded-lg animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.7)]"
-                style={{
-                  top: `${(activeBoxModal.box[0] / 1000) * 100}%`,
-                  left: `${(activeBoxModal.box[1] / 1000) * 100}%`,
-                  width: `${((activeBoxModal.box[3] - activeBoxModal.box[1]) / 1000) * 100}%`,
-                  height: `${((activeBoxModal.box[2] - activeBoxModal.box[0]) / 1000) * 100}%`
-                }}
-              >
-                {/* External Badge Label Positioned Above Box */}
-                <span className="absolute -top-6 left-0 bg-red-600 text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md shadow-md whitespace-nowrap z-10">
-                  {activeBoxModal.item.severity} Damage
-                </span>
-              </div>
-            </div>
 
-            <button 
-              onClick={() => setActiveBoxModal(null)}
-              className="w-full h-11 bg-slate-900 text-white font-bold text-xs rounded-xl hover:bg-slate-800 cursor-pointer"
-            >
-              Close Overlay
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <button onClick={() => setCurrentStep('checklist')} className="w-8 h-8 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50">
+          <button aria-label="Back to photo checklist" onClick={() => setCurrentStep('checklist')} className="w-11 h-11 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50">
             <ArrowLeft className="w-4 h-4" />
           </button>
           <h2 className="text-xl font-bold text-slate-900">Results</h2>
         </div>
         <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
-          {Math.min(3, findings.length)} of {findings.length || 6} findings shown
+          {Math.min(3, findings.length)} of {findings.length} findings shown
         </span>
       </div>
 
@@ -154,7 +78,7 @@ export default function CarMapResults({
         {/* Left Column: 2D Top-Down Car Outline Map */}
         <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-slate-200 shadow-sm text-center lg:sticky lg:top-24">
           <h3 className="font-extrabold text-xl text-slate-900 mb-1">Inspection complete</h3>
-          <p className="text-xs text-slate-500 mb-5">We found {findings.length || 6} visible areas that may need attention.</p>
+          <p className="text-xs text-slate-500 mb-5">We found {findings.length} visible areas that may need attention.</p>
 
           <div className="w-full h-96 bg-[#F1F5F9]/70 rounded-3xl border border-slate-200/80 relative flex items-center justify-center overflow-hidden p-6">
             <svg className="h-full w-auto drop-shadow-xs" viewBox="0 0 220 440" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -309,11 +233,12 @@ export default function CarMapResults({
                 return (
                   <g 
                     key={item.finding_id || idx}
-                    className="cursor-pointer transition-transform hover:scale-110"
+                    role="button" tabIndex={0} aria-label={`View damage photo ${idx + 1}: ${getSanitizedVehiclePart(item)}`}
+                    onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setActiveBoxModal({ item }); } }}
+                    className="cursor-pointer"
                     onClick={() => {
-                      const displaySrc = getUploadedPhotoSrc(item, photos);
-                      const box = item.bounding_boxes?.[0]?.box || [150, 420, 220, 580];
-                      setActiveBoxModal({ item, box, displaySrc });
+                      const displaySrc = getFindingEvidence(item, photos).src;
+                      setActiveBoxModal({ item });
                     }}
                   >
                     <circle 
@@ -343,7 +268,7 @@ export default function CarMapResults({
             </svg>
           </div>
 
-          <div className="flex items-center justify-center gap-4 mt-5 text-xs font-semibold text-slate-600">
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-5 text-xs font-semibold text-slate-600">
             <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-[#D97706] inline-block"></span> Minor</span>
             <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-[#DC2626] inline-block"></span> Moderate</span>
             <span className="text-slate-300">|</span>
@@ -357,22 +282,23 @@ export default function CarMapResults({
             Detected damage ({Math.min(3, findings.length)} of {findings.length} shown)
           </h3>
 
+          {findings.length === 0 && <p className="rounded-xl bg-white p-4 text-sm text-slate-600">No damage findings were returned for this inspection.</p>}
           {findings.slice(0, 3).map((item, idx) => {
-            const displaySrc = getUploadedPhotoSrc(item, photos);
+            const displaySrc = getFindingEvidence(item, photos).src;
 
             return (
               <div key={item.finding_id || idx} className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-slate-300 transition-colors">
-                <div className="flex items-center gap-4">
+                <div className="flex min-w-0 items-center gap-3">
                   <div className="relative shrink-0 w-20 h-20 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
-                    <img src={displaySrc} alt={item.vehicle_part} className="w-full h-full object-cover" />
+                    {displaySrc ? <img src={displaySrc} alt={item.vehicle_part} className="w-full h-full object-cover" /> : <span className="flex h-full items-center p-2 text-xs">Photo unavailable</span>}
                     <span className="absolute top-1 left-1 w-5 h-5 rounded-full bg-slate-900 text-white font-extrabold text-[10px] flex items-center justify-center shadow-xs">
                       {idx + 1}
                     </span>
                   </div>
-                  <div>
+                  <div className="min-w-0 wrap-anywhere">
                     <h4 className="font-extrabold text-base text-slate-900 capitalize">{getSanitizedVehiclePart(item)}</h4>
                     <p className="text-xs text-slate-500 mt-0.5 capitalize">{item.damage_type?.replace(/_/g, ' ')}</p>
-                    <p className="text-[11px] text-slate-400 font-semibold mt-1">{Math.round((item.confidence || 0.92) * 100)}% confidence</p>
+                    <p className="text-[11px] text-slate-400 font-semibold mt-1">{Math.round((item.confidence ?? 0.92) * 100)}% confidence</p>
                   </div>
                 </div>
 
@@ -383,15 +309,14 @@ export default function CarMapResults({
                     {(item.severity || 'Minor').toUpperCase()}
                   </span>
 
-                  <span 
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-sky-600 cursor-pointer hover:text-sky-700" 
+                  <button type="button"
+                    className="min-h-11 inline-flex items-center gap-1.5 text-xs font-bold text-sky-600 cursor-pointer hover:text-sky-700" 
                     onClick={() => {
-                      const box = item.bounding_boxes?.[0]?.box || [150, 420, 220, 580];
-                      setActiveBoxModal({ item, box, displaySrc });
+                      setActiveBoxModal({ item });
                     }}
                   >
                     🖼️ View photo
-                  </span>
+                  </button>
                 </div>
               </div>
             );

@@ -1,37 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { CheckCircle2, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Helper function to resolve exact uploaded photo src for a finding, with fallback to user's first uploaded photo
-const getUploadedPhotoSrc = (item, photos) => {
-  if (!photos || typeof photos !== 'object') return null;
-
-  const uploadedUrls = Object.values(photos)
-    .filter(Boolean)
-    .map(p => (typeof p === 'object' ? p?.url : p))
-    .filter(url => url && typeof url === 'string');
-
-  const defaultUserPhoto = uploadedUrls[0] || null;
-
-  const suppImages = item?.supporting_images || [];
-  for (const imgKey of suppImages) {
-    if (!imgKey) continue;
-    const digits = imgKey.replace(/\D/g, '');
-    if (!digits) continue;
-    const padded = digits.padStart(2, '0');
-    const unpadded = parseInt(digits, 10).toString();
-
-    const matched = photos[imgKey] || photos[digits] || photos[padded] || photos[unpadded] || photos[`IMAGE_${padded}`] || photos[`IMAGE_${unpadded}`];
-    if (matched) {
-      const src = typeof matched === 'object' ? matched.url : matched;
-      if (src) return src;
-    }
-  }
-
-  return defaultUserPhoto;
-};
+import DamagePhotoDialog from './DamagePhotoDialog';
+import { getFindingEvidence } from './findingEvidence.mjs';
 
 // Helper function to guarantee vehicle part text label matches the exact photo angle slot
 const getSanitizedVehiclePart = (item) => {
@@ -80,63 +54,17 @@ export default function UnlockedReport({ userInfo, analysisResults, activeInspec
   };
 
   return (
-    <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-6">
-      {/* Interactive Bounding Box Modal */}
-      {activeBoxModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 md:p-6 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-4 md:p-6 border border-slate-200 shadow-2xl relative flex flex-col gap-4 max-h-[92vh]">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="font-extrabold text-base md:text-lg text-slate-900 capitalize">
-                  {getSanitizedVehiclePart(activeBoxModal.item)} Damage Box
-                </h3>
-                <p className="text-[11px] md:text-xs text-slate-500 capitalize">
-                  {activeBoxModal.item.damage_type?.replace(/_/g, ' ')} • Bounding Box: [{activeBoxModal.box.join(', ')}]
-                </p>
-              </div>
-              <button 
-                onClick={() => setActiveBoxModal(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 flex items-center justify-center cursor-pointer shrink-0"
-              >
-                ✕
-              </button>
-            </div>
+    <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-sm flex flex-col gap-6">
+      {activeBoxModal && <DamagePhotoDialog item={activeBoxModal.item} photos={photos} title={getSanitizedVehiclePart(activeBoxModal.item)} onClose={() => setActiveBoxModal(null)} />}
 
-            <div className="relative w-full aspect-4/3 max-h-[55vh] rounded-2xl overflow-hidden bg-slate-950 border border-slate-200 flex items-center justify-center">
-              <img src={activeBoxModal.displaySrc} alt="Damage bounding box" className="w-full h-full object-contain" />
-              
-              <div 
-                className="absolute border-3 border-red-500 bg-red-500/20 rounded-lg animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.7)]"
-                style={{
-                  top: `${(activeBoxModal.box[0] / 1000) * 100}%`,
-                  left: `${(activeBoxModal.box[1] / 1000) * 100}%`,
-                  width: `${((activeBoxModal.box[3] - activeBoxModal.box[1]) / 1000) * 100}%`,
-                  height: `${((activeBoxModal.box[2] - activeBoxModal.box[0]) / 1000) * 100}%`
-                }}
-              >
-                <span className="absolute -top-6 left-0 bg-red-600 text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md shadow-md whitespace-nowrap z-10">
-                  {activeBoxModal.item.severity} Damage
-                </span>
-              </div>
-            </div>
-
-            <button 
-              onClick={() => setActiveBoxModal(null)}
-              className="w-full h-11 bg-slate-900 text-white font-bold text-xs rounded-xl hover:bg-slate-800 cursor-pointer"
-            >
-              Close Overlay
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Payment Success Banner */}
-      <div className="bg-gradient-to-r from-emerald-900 to-slate-900 text-white rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-md">
-        <div className="flex items-center gap-4">
+      <div className="bg-gradient-to-r from-emerald-900 to-slate-900 text-white rounded-2xl p-4 sm:p-6 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 shadow-md">
+        <div className="flex min-w-0 flex-1 flex-col sm:flex-row sm:items-center gap-3">
           <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-400 flex items-center justify-center shrink-0">
             <CheckCircle2 className="w-7 h-7" />
           </div>
-          <div>
+          <div className="min-w-0 wrap-anywhere">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase tracking-wider mb-1 border border-emerald-400/30">
               ✓ Payment Verified • $3.00
             </div>
@@ -149,7 +77,7 @@ export default function UnlockedReport({ userInfo, analysisResults, activeInspec
 
         <button 
           onClick={downloadPdf}
-          className="px-6 h-12 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs rounded-xl flex items-center gap-2 shadow-lg transition-all cursor-pointer shrink-0"
+          className="w-full lg:w-auto px-4 min-h-12 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs rounded-xl flex items-center gap-2 shadow-lg transition-all cursor-pointer shrink-0"
         >
           <Download className="w-4 h-4 text-slate-950" /> Download PDF Certificate
         </button>
@@ -157,32 +85,33 @@ export default function UnlockedReport({ userInfo, analysisResults, activeInspec
 
       {/* Full Unlocked Findings List */}
       <div>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
-            <h3 className="text-xl font-extrabold text-slate-900">All {findings.length || 9} Detected Damage Findings</h3>
+            <h3 className="text-xl font-extrabold text-slate-900">All {findings.length} Detected Damage Findings</h3>
             <p className="text-xs text-slate-500 mt-0.5">Full unlocked report containing all detected damage, severity levels, and AI bounding box coordinates.</p>
           </div>
-          <span className="text-xs font-bold bg-slate-100 text-slate-700 px-3 py-1 rounded-full border border-slate-200">
+          <span className="self-start shrink-0 text-xs font-bold bg-slate-100 text-slate-700 px-3 py-1 rounded-full border border-slate-200">
             {findings.length} of {findings.length} Unlocked
           </span>
         </div>
 
+        {findings.length === 0 && <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">No damage findings were returned for this inspection.</p>}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {findings.map((item, idx) => {
-            const displaySrc = getUploadedPhotoSrc(item, photos);
+            const displaySrc = getFindingEvidence(item, photos).src;
 
             return (
-              <div key={item.finding_id || idx} className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200 flex items-start gap-4 hover:bg-white hover:border-slate-300 transition-all">
+              <div key={item.finding_id || idx} className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200 flex min-w-0 flex-col sm:flex-row items-start gap-3 hover:bg-white hover:border-slate-300 transition-all">
                 <div className="relative shrink-0 w-20 h-20 rounded-xl overflow-hidden border border-slate-200 bg-slate-200">
-                  <img src={displaySrc} alt={item.vehicle_part} className="w-full h-full object-cover" />
+                  {displaySrc ? <img src={displaySrc} alt={item.vehicle_part} className="w-full h-full object-cover" /> : <span className="flex h-full items-center p-2 text-xs">Photo unavailable</span>}
                   <span className="absolute top-1 left-1 w-5 h-5 rounded-full bg-slate-900 text-white font-extrabold text-[10px] flex items-center justify-center shadow-xs">
                     {idx + 1}
                   </span>
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <h4 className="font-bold text-sm text-slate-900 capitalize truncate">{getSanitizedVehiclePart(item)}</h4>
+                  <div className="flex flex-col items-start gap-2">
+                    <h4 className="font-bold text-sm text-slate-900 capitalize wrap-anywhere">{getSanitizedVehiclePart(item)}</h4>
                     <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase shrink-0 ${
                       item.severity === 'Severe' ? 'bg-red-100 text-red-700 border border-red-200' : item.severity === 'Moderate' ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-amber-100 text-amber-800 border border-amber-200'
                     }`}>
@@ -191,22 +120,21 @@ export default function UnlockedReport({ userInfo, analysisResults, activeInspec
                   </div>
 
                   <p className="text-xs text-slate-600 font-medium capitalize mt-1">
-                    {item.damage_type?.replace(/_/g, ' ')} • <span className="text-slate-900 font-bold">{Math.round((item.confidence || 0.92) * 100)}% Confidence</span>
+                    {item.damage_type?.replace(/_/g, ' ')} • <span className="text-slate-900 font-bold">{Math.round((item.confidence ?? 0.92) * 100)}% Confidence</span>
                   </p>
                   
                   {item.description && (
-                    <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">{item.description}</p>
+                    <p className="text-xs text-slate-500 mt-1 line-clamp-2">{item.description}</p>
                   )}
 
-                  <span 
-                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-sky-600 mt-2 cursor-pointer hover:underline" 
+                  <button type="button"
+                    className="min-h-11 text-left inline-flex items-center gap-1 text-xs font-semibold text-sky-600 mt-2 cursor-pointer hover:underline" 
                     onClick={() => {
-                      const box = item.bounding_boxes?.[0]?.box || [150, 420, 220, 580];
-                      setActiveBoxModal({ item, box, displaySrc });
+                      setActiveBoxModal({ item });
                     }}
                   >
                     🔍 View Bounding Box Overlay
-                  </span>
+                  </button>
                 </div>
               </div>
             );
@@ -215,8 +143,8 @@ export default function UnlockedReport({ userInfo, analysisResults, activeInspec
       </div>
 
       {/* SHA-256 Certificate Audit Verification Footer */}
-      <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-        <span className="font-medium">Digital Verification Hash: <code className="bg-slate-100 px-2 py-0.5 rounded text-[11px] text-slate-700 font-mono">sha256-e8f9a201b49912c388a</code></span>
+      <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500">
+        <span className="min-w-0 wrap-anywhere font-medium">Digital Verification Hash: <code className="bg-slate-100 px-2 py-0.5 rounded text-xs text-slate-700 font-mono">sha256-e8f9a201b49912c388a</code></span>
         <span className="text-emerald-600 font-bold flex items-center gap-1">✓ Cryptographically Signed</span>
       </div>
     </div>
