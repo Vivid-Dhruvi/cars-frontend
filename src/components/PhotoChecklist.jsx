@@ -96,9 +96,9 @@ export default function PhotoChecklist({
             { id: '13', code: 'IMAGE_13', title: 'Rear-Right Wheel', subtitle: 'Rim & hubcap close-up', guide: '📸 Crouch parallel to hub', img: photos['13'], isWheel: true },
             { id: '14', code: 'IMAGE_14', title: 'Front-Right Wheel', subtitle: 'Rim & hubcap close-up', guide: '📸 Crouch parallel to hub', img: photos['14'], isWheel: true },
           ].map((item) => (
-            <label 
+            <div 
               key={item.id}
-              className={`border rounded-3xl overflow-hidden flex flex-col justify-between h-60 relative group cursor-pointer transition-all shadow-xs ${
+              className={`border rounded-3xl overflow-hidden flex flex-col justify-between h-64 relative group transition-all shadow-xs ${
                 item.img 
                   ? 'bg-slate-900 border-slate-800' 
                   : item.isWheel 
@@ -106,9 +106,21 @@ export default function PhotoChecklist({
                     : 'bg-slate-50 border-slate-200 hover:border-slate-300'
               }`}
             >
+              {/* Camera Input (forces live camera) */}
               <input 
+                id={`cam-input-${item.id}`}
                 type="file" 
-                accept="image/jpeg,image/png,image/webp,image/heic" 
+                accept="image/*" 
+                capture="environment"
+                className="hidden" 
+                onChange={(e) => e.target.files?.[0] && handleFileUpload(item.id, e.target.files[0])} 
+              />
+
+              {/* Gallery Input (forces gallery / file picker) */}
+              <input 
+                id={`gal-input-${item.id}`}
+                type="file" 
+                accept="image/*" 
                 className="hidden" 
                 onChange={(e) => e.target.files?.[0] && handleFileUpload(item.id, e.target.files[0])} 
               />
@@ -124,13 +136,9 @@ export default function PhotoChecklist({
                   </span>
                 </div>
 
-                {item.img ? (
+                {item.img && (
                   <span className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xs">
                     <Check className="w-4 h-4" />
-                  </span>
-                ) : (
-                  <span className="w-7 h-7 rounded-full bg-slate-800/60 text-white flex items-center justify-center backdrop-blur-xs group-hover:bg-slate-900">
-                    <Camera className="w-3.5 h-3.5" />
                   </span>
                 )}
               </div>
@@ -142,8 +150,7 @@ export default function PhotoChecklist({
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent"></div>
                 </div>
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-1.5 px-3 text-center my-auto">
-                  <Camera className={`w-8 h-8 ${item.isWheel ? 'text-indigo-500 opacity-60' : 'opacity-40'}`} />
+                <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-1 px-3 text-center my-auto">
                   <span className="text-xs font-bold text-slate-700">{item.title}</span>
                   <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
                     item.isWheel ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-200/70 text-slate-600'
@@ -153,15 +160,27 @@ export default function PhotoChecklist({
                 </div>
               )}
 
-              {/* Bottom Title Label */}
-              <div className="p-3.5 z-10 bg-white/95 backdrop-blur-xs border-t border-slate-200/80">
-                <div className="font-bold text-xs text-slate-900 flex items-center justify-between">
-                  <span>{item.title}</span>
-                  {item.img && <span className="text-[10px] text-emerald-600 font-semibold">Tap to Retake</span>}
+              {/* Bottom Action Bar: Explicit Camera & Gallery Buttons */}
+              <div className="p-2.5 z-10 bg-white/95 backdrop-blur-xs border-t border-slate-200/80 flex flex-col gap-1.5">
+                <div className="font-bold text-xs text-slate-900 truncate">
+                  {item.title}
                 </div>
-                <p className="text-[10px] text-slate-500 truncate mt-0.5">{item.subtitle}</p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <label 
+                    htmlFor={`cam-input-${item.id}`}
+                    className="py-1.5 px-2 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-95 shadow-2xs"
+                  >
+                    <Camera className="w-3.5 h-3.5 text-sky-400" /> Camera
+                  </label>
+                  <label 
+                    htmlFor={`gal-input-${item.id}`}
+                    className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-95 border border-slate-200"
+                  >
+                    🖼️ Gallery
+                  </label>
+                </div>
               </div>
-            </label>
+            </div>
           ))}
         </div>
 
