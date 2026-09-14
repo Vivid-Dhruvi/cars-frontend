@@ -86,32 +86,32 @@ export default function CarMapResults({
     <div className="flex flex-col gap-6">
       {/* Interactive Bounding Box Modal */}
       {activeBoxModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 border border-slate-200 shadow-2xl relative flex flex-col gap-4">
+        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 md:p-6 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-4 md:p-6 border border-slate-200 shadow-2xl relative flex flex-col gap-4 max-h-[92vh]">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h3 className="font-extrabold text-lg text-slate-900 capitalize">
+                <h3 className="font-extrabold text-base md:text-lg text-slate-900 capitalize">
                   {getSanitizedVehiclePart(activeBoxModal.item)} Damage Box
                 </h3>
-                <p className="text-xs text-slate-500 capitalize">
-                  {activeBoxModal.item.damage_type?.replace(/_/g, ' ')} • Normalized Coordinates: [{activeBoxModal.box.join(', ')}]
+                <p className="text-[11px] md:text-xs text-slate-500 capitalize">
+                  {activeBoxModal.item.damage_type?.replace(/_/g, ' ')} • Bounding Box: [{activeBoxModal.box.join(', ')}]
                 </p>
               </div>
               <button 
                 onClick={() => setActiveBoxModal(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 flex items-center justify-center cursor-pointer"
+                className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 flex items-center justify-center cursor-pointer shrink-0"
               >
                 ✕
               </button>
             </div>
 
-            {/* Photo with Bounding Box Overlay */}
-            <div className="relative w-full h-80 rounded-2xl overflow-hidden bg-slate-900 border border-slate-200">
-              <img src={activeBoxModal.displaySrc} alt="Damage bounding box" className="w-full h-full object-cover" />
+            {/* Photo Container maintaining natural aspect ratio */}
+            <div className="relative w-full aspect-4/3 max-h-[55vh] rounded-2xl overflow-hidden bg-slate-950 border border-slate-200 flex items-center justify-center">
+              <img src={activeBoxModal.displaySrc} alt="Damage bounding box" className="w-full h-full object-contain" />
               
-              {/* Animated Bounding Box Rectangle */}
+              {/* Animated Bounding Box Overlay */}
               <div 
-                className="absolute border-3 border-red-500 bg-red-500/15 rounded-lg animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.6)]"
+                className="absolute border-3 border-red-500 bg-red-500/20 rounded-lg animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.7)]"
                 style={{
                   top: `${(activeBoxModal.box[0] / 1000) * 100}%`,
                   left: `${(activeBoxModal.box[1] / 1000) * 100}%`,
@@ -120,7 +120,7 @@ export default function CarMapResults({
                 }}
               >
                 {/* External Badge Label Positioned Above Box */}
-                <span className="absolute -top-7 left-0 bg-red-600 text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md shadow-md whitespace-nowrap z-10">
+                <span className="absolute -top-6 left-0 bg-red-600 text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md shadow-md whitespace-nowrap z-10">
                   {activeBoxModal.item.severity} Damage
                 </span>
               </div>
