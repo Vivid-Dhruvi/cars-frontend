@@ -158,7 +158,6 @@ export default function App() {
             capturedCount={capturedCount}
             handleFileUpload={handleFileUpload}
             handleAnalyzePhotos={handleAnalyzePhotos}
-            setPhotos={setPhotos}
             isUploading={isUploading}
           />
         )}

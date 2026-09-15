@@ -1,7 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Camera, Image, Check, AlertTriangle, Sparkles, ChevronRight } from 'lucide-react';
-import { DAMAGED_CAR_PHOTO } from './demoPhotoData';
 
 /**
  * Detects whether the current device has at least one camera (videoinput).
@@ -40,8 +39,6 @@ const ANGLES = [
   { id: '14', code: 'IMAGE_14', title: 'Front-Right Wheel',  subtitle: 'Rim & hubcap close-up',           guide: 'Crouch parallel to hub', isWheel: true },
 ];
 
-const DEMO_PHOTOS = Object.fromEntries(ANGLES.map((a) => [a.id, DAMAGED_CAR_PHOTO]));
-
 export default function PhotoChecklist({
   vehicleData,
   setVehicleData,
@@ -49,7 +46,6 @@ export default function PhotoChecklist({
   capturedCount,
   handleFileUpload,
   handleAnalyzePhotos,
-  setPhotos,
   isUploading,
 }) {
   const hasCamera = useHasCamera();
@@ -71,12 +67,6 @@ export default function PhotoChecklist({
               Take 14 clear, well-lit photos from each angle. Wipe your lens and avoid harsh shadows for best AI accuracy.
             </p>
           </div>
-          <button
-            onClick={() => setPhotos(DEMO_PHOTOS)}
-            className="self-start sm:self-center shrink-0 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl border border-white/20 transition-all cursor-pointer backdrop-blur-sm"
-          >
-            ⚡ Fill Demo Photos
-          </button>
         </div>
       </div>
 
@@ -215,18 +205,11 @@ export default function PhotoChecklist({
         </div>
 
         {/* footer actions */}
-        <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
-          <button
-            onClick={() => setPhotos(DEMO_PHOTOS)}
-            className="w-full sm:w-auto flex-1 min-h-11 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-2xl cursor-pointer transition-all"
-          >
-            Demo Fill All 14 Photos
-          </button>
-
+        <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-3">
           <button
             onClick={handleAnalyzePhotos}
-            disabled={isUploading}
-            className="w-full sm:w-auto flex-1 min-h-11 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:bg-slate-300 disabled:text-slate-500 transition-all"
+            disabled={isUploading || capturedCount === 0}
+            className="w-full min-h-12 px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed transition-all"
           >
             {isUploading ? (
               <>
@@ -235,7 +218,7 @@ export default function PhotoChecklist({
               </>
             ) : (
               <>
-                Analyse Vehicle
+                Analyse Vehicle ({capturedCount}/14 photos captured)
                 <ChevronRight className="w-4 h-4 text-sky-400" />
               </>
             )}

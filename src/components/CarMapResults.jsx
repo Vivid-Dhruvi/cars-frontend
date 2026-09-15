@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ArrowLeft, Lock, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Lock, ArrowRight, Eye } from 'lucide-react';
 
 import DamagePhotoDialog from './DamagePhotoDialog';
 import { getFindingEvidence } from './findingEvidence.mjs';
@@ -310,12 +310,13 @@ export default function CarMapResults({
                   </span>
 
                   <button type="button"
-                    className="min-h-11 inline-flex items-center gap-1.5 text-xs font-bold text-sky-600 cursor-pointer hover:text-sky-700" 
+                    className="min-h-9 inline-flex items-center gap-1.5 text-xs font-bold text-sky-600 bg-sky-50 hover:bg-sky-100 hover:text-sky-700 px-3 py-1.5 rounded-xl border border-sky-200/60 cursor-pointer transition-all active:scale-95" 
                     onClick={() => {
                       setActiveBoxModal({ item });
                     }}
                   >
-                    🖼️ View photo
+                    <Eye className="w-3.5 h-3.5 text-sky-600" />
+                    <span>View photo</span>
                   </button>
                 </div>
               </div>

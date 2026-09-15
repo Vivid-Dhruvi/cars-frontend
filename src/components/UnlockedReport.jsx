@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle2, Download } from 'lucide-react';
+import { CheckCircle2, Download, Scan, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 import DamagePhotoDialog from './DamagePhotoDialog';
@@ -128,12 +128,13 @@ export default function UnlockedReport({ userInfo, analysisResults, activeInspec
                   )}
 
                   <button type="button"
-                    className="min-h-11 text-left inline-flex items-center gap-1 text-xs font-semibold text-sky-600 mt-2 cursor-pointer hover:underline" 
+                    className="min-h-8 inline-flex items-center gap-1.5 text-xs font-semibold text-sky-600 bg-sky-50 hover:bg-sky-100 hover:text-sky-700 px-2.5 py-1 rounded-lg border border-sky-200/60 mt-2.5 cursor-pointer transition-all active:scale-95 w-fit" 
                     onClick={() => {
                       setActiveBoxModal({ item });
                     }}
                   >
-                    🔍 View Bounding Box Overlay
+                    <Scan className="w-3.5 h-3.5 text-sky-600" />
+                    <span>View Bounding Box Overlay</span>
                   </button>
                 </div>
               </div>
@@ -145,7 +146,10 @@ export default function UnlockedReport({ userInfo, analysisResults, activeInspec
       {/* SHA-256 Certificate Audit Verification Footer */}
       <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500">
         <span className="min-w-0 wrap-anywhere font-medium">Digital Verification Hash: <code className="bg-slate-100 px-2 py-0.5 rounded text-xs text-slate-700 font-mono">sha256-e8f9a201b49912c388a</code></span>
-        <span className="text-emerald-600 font-bold flex items-center gap-1">✓ Cryptographically Signed</span>
+        <span className="text-emerald-600 font-bold flex items-center gap-1.5">
+          <ShieldCheck className="w-4 h-4 text-emerald-600" />
+          <span>Cryptographically Signed</span>
+        </span>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef } from 'react';
+import { X } from 'lucide-react';
 import { getFindingEvidence } from './findingEvidence.mjs';
 
 export default function DamagePhotoDialog({ item, photos, title, onClose }) {
@@ -31,7 +32,9 @@ export default function DamagePhotoDialog({ item, photos, title, onClose }) {
             </p>
           </div>
           <button type="button" autoFocus aria-label="Close damage photo" onClick={onClose}
-            className="flex size-11 shrink-0 items-center justify-center rounded-full bg-slate-100 font-bold hover:bg-slate-200">✕</button>
+            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
         </header>
         <div className="min-h-0 overflow-y-auto p-4 sm:px-6">
           {src ? (
