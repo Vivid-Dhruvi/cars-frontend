@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ArrowLeft, Lock, ArrowRight, Eye } from 'lucide-react';
+import { toast } from 'sonner';
 
 import DamagePhotoDialog from './DamagePhotoDialog';
 import { getFindingEvidence } from './findingEvidence.mjs';
@@ -43,8 +44,136 @@ const getSanitizedVehiclePart = (item) => {
     }
   }
 
-  return ANGLE_LABEL_MAP[paddedKey] || item?.vehicle_part?.replace(/_/g, ' ') || 'Vehicle Part';
+  const rawPart = item?.vehicle_part || ANGLE_LABEL_MAP[paddedKey] || 'Vehicle Panel';
+  return rawPart.replace(/_/g, ' ');
 };
+
+// Helper function to resolve dynamic non-overlapping 2D car map coordinates for all findings
+function getResolvedCarPins(findings) {
+  const MIN_PIN_DISTANCE = 30; // Minimum center-to-center distance for 13px radius circles (with padding)
+  const placedPins = [];
+
+  findings.forEach((item, idx) => {
+    const part = (item.vehicle_part || '').toLowerCase();
+    const desc = (item.description || '').toLowerCase();
+    const damageType = (item.damage_type || '').toLowerCase();
+    const suppImg = item.supporting_images?.[0] || 'IMAGE_01';
+    
+    // Extract normalized bounding box center X (0 to 1000)
+    const box = item.bounding_boxes?.[0]?.box;
+    let boxXCenter = 500;
+    if (box && box.length === 4) {
+      boxXCenter = (box[1] + box[3]) / 2;
+    }
+
+    // Check explicit side keywords
+    const isExplicitLeft = part.includes('left') || desc.includes('left') || damageType.includes('left') || part.includes('driver');
+    const isExplicitRight = part.includes('right') || desc.includes('right') || damageType.includes('right') || part.includes('passenger');
+
+    let side = 'center';
+    if (isExplicitLeft) side = 'left';
+    else if (isExplicitRight) side = 'right';
+    else {
+      if (suppImg === 'IMAGE_01' || part.includes('front')) {
+        if (boxXCenter < 480) side = 'right';
+        else if (boxXCenter > 520) side = 'left';
+      } else if (suppImg === 'IMAGE_02' || suppImg === 'IMAGE_03' || part.includes('rear')) {
+        if (boxXCenter < 480) side = 'left';
+        else if (boxXCenter > 520) side = 'right';
+      }
+    }
+
+    let cx = 110;
+    let cy = 220;
+
+    if (part.includes('front_bumper') || part.includes('grille') || part.includes('headlight')) {
+      cy = 42;
+      cx = side === 'left' ? 75 : side === 'right' ? 145 : 110;
+    } else if (part.includes('rear_bumper') || part.includes('taillight') || part.includes('exhaust')) {
+      cy = 395;
+      cx = side === 'left' ? 75 : side === 'right' ? 145 : 110;
+    } else if (part.includes('hood') || part.includes('bonnet')) {
+      cy = 85;
+      cx = side === 'left' ? 85 : side === 'right' ? 135 : 110;
+    } else if (part.includes('windshield') && !part.includes('rear')) {
+      cy = 145;
+      cx = side === 'left' ? 90 : side === 'right' ? 130 : 110;
+    } else if (part.includes('rear_windshield')) {
+      cy = 305;
+      cx = side === 'left' ? 90 : side === 'right' ? 130 : 110;
+    } else if (part.includes('trunk') || part.includes('tailgate') || part.includes('boot')) {
+      cy = 350;
+      cx = side === 'left' ? 85 : side === 'right' ? 135 : 110;
+    } else if (part.includes('roof')) {
+      cy = 230;
+      cx = side === 'left' ? 85 : side === 'right' ? 135 : 110;
+    } else if (part.includes('quarter_panel') || part.includes('fender')) {
+      if (part.includes('front')) {
+        cy = 90;
+        cx = side === 'right' ? 152 : 68;
+      } else {
+        cy = 320;
+        cx = side === 'right' ? 152 : 68;
+      }
+    } else if (part.includes('door')) {
+      if (part.includes('rear')) {
+        cy = 250;
+        cx = side === 'right' ? 154 : 66;
+      } else {
+        cy = 175;
+        cx = side === 'right' ? 154 : 66;
+      }
+    } else if (part.includes('wheel') || part.includes('rim') || part.includes('tire')) {
+      if (part.includes('front')) {
+        cx = side === 'right' ? 182 : 38;
+        cy = 104;
+      } else {
+        cx = side === 'right' ? 182 : 38;
+        cy = 334;
+      }
+    } else if (part.includes('mirror')) {
+      cx = side === 'right' ? 180 : 40;
+      cy = 142;
+    } else {
+      if (side === 'left') { cx = 68; cy = 220; }
+      else if (side === 'right') { cx = 152; cy = 220; }
+      else { cx = 110; cy = 220; }
+    }
+
+    // Dynamic collision resolution loop to ensure zero overlap between any pins
+    let attempts = 0;
+    let isColliding = true;
+    while (isColliding && attempts < 20) {
+      isColliding = false;
+      for (const placed of placedPins) {
+        const dx = cx - placed.cx;
+        const dy = cy - placed.cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < MIN_PIN_DISTANCE) {
+          isColliding = true;
+          const shift = MIN_PIN_DISTANCE - dist + 4;
+          if (Math.abs(dy) >= Math.abs(dx) || dy === 0) {
+            const shiftY = cy >= placed.cy ? shift : -shift;
+            cy += shiftY;
+          } else {
+            const shiftX = cx >= placed.cx ? shift : -shift;
+            cx += shiftX;
+          }
+          break;
+        }
+      }
+      attempts++;
+    }
+
+    // Keep pin comfortably inside SVG viewbox bounds
+    cx = Math.max(36, Math.min(184, cx));
+    cy = Math.max(38, Math.min(402, cy));
+
+    placedPins.push({ item, idx, cx, cy });
+  });
+
+  return placedPins;
+}
 
 export default function CarMapResults({ 
   vehicleData, 
@@ -54,6 +183,7 @@ export default function CarMapResults({
 }) {
   const findings = analysisResults?.findings || [];
   const [activeBoxModal, setActiveBoxModal] = React.useState(null);
+  const placedPins = React.useMemo(() => getResolvedCarPins(findings), [findings]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -130,115 +260,35 @@ export default function CarMapResults({
               <path d="M 70 70 Q 110 58 150 70" stroke="#CBD5E1" strokeWidth="1.5" strokeDasharray="3 2" fill="none" />
               <path d="M 70 365 Q 110 375 150 365" stroke="#CBD5E1" strokeWidth="1.5" strokeDasharray="3 2" fill="none" />
 
-              {/* Dynamic SVG Pin Markers directly anchored to vector coordinates inside the vehicle silhouette */}
-              {findings.map((item, idx) => {
-                const part = (item.vehicle_part || '').toLowerCase();
-                const desc = (item.description || '').toLowerCase();
-                const damageType = (item.damage_type || '').toLowerCase();
-                const suppImg = item.supporting_images?.[0] || 'IMAGE_01';
-                
-                // Extract normalized bounding box center X (0 to 1000)
-                const box = item.bounding_boxes?.[0]?.box; // [ymin, xmin, ymax, xmax]
-                let boxXCenter = 500;
-                if (box && box.length === 4) {
-                  boxXCenter = (box[1] + box[3]) / 2;
-                }
-
-                // Check explicit side keywords in vehicle_part, description, or damage_type
-                const isExplicitLeft = part.includes('left') || desc.includes('left') || damageType.includes('left') || part.includes('driver');
-                const isExplicitRight = part.includes('right') || desc.includes('right') || damageType.includes('right') || part.includes('passenger');
-
-                // Determine side (left, right, center)
-                let side = 'center';
-                if (isExplicitLeft) side = 'left';
-                else if (isExplicitRight) side = 'right';
-                else {
-                  // Infer side from photo angle & AI bounding box X coordinate
-                  if (suppImg === 'IMAGE_01' || part.includes('front')) {
-                    // Front View: Photo Left (boxXCenter < 480) is Car RIGHT (Passenger side). Photo Right is Car LEFT.
-                    if (boxXCenter < 480) side = 'right';
-                    else if (boxXCenter > 520) side = 'left';
-                  } else if (suppImg === 'IMAGE_02' || suppImg === 'IMAGE_03' || part.includes('rear')) {
-                    // Rear View: Photo Left (boxXCenter < 480) is Car LEFT (Driver side). Photo Right is Car RIGHT.
-                    if (boxXCenter < 480) side = 'left';
-                    else if (boxXCenter > 520) side = 'right';
-                  }
-                }
-
-                let cx = 110;
-                let cy = 220;
-
-                if (part.includes('front_bumper') || part.includes('grille') || part.includes('headlight')) {
-                  cy = 42;
-                  cx = side === 'left' ? 75 : side === 'right' ? 145 : 110;
-                } else if (part.includes('rear_bumper') || part.includes('taillight') || part.includes('exhaust')) {
-                  cy = 395;
-                  cx = side === 'left' ? 75 : side === 'right' ? 145 : 110;
-                } else if (part.includes('hood') || part.includes('bonnet')) {
-                  cy = 85;
-                  cx = side === 'left' ? 85 : side === 'right' ? 135 : 110;
-                } else if (part.includes('windshield') && !part.includes('rear')) {
-                  cy = 145;
-                  cx = side === 'left' ? 90 : side === 'right' ? 130 : 110;
-                } else if (part.includes('rear_windshield')) {
-                  cy = 305;
-                  cx = side === 'left' ? 90 : side === 'right' ? 130 : 110;
-                } else if (part.includes('trunk') || part.includes('tailgate') || part.includes('boot')) {
-                  cy = 350;
-                  cx = side === 'left' ? 85 : side === 'right' ? 135 : 110;
-                } else if (part.includes('roof')) {
-                  cy = 230;
-                  cx = side === 'left' ? 85 : side === 'right' ? 135 : 110;
-                } else if (part.includes('quarter_panel') || part.includes('fender')) {
-                  if (part.includes('front')) {
-                    cy = 90;
-                    cx = side === 'right' ? 152 : 68;
-                  } else {
-                    // Rear quarter panel / fender
-                    cy = 320;
-                    cx = side === 'right' ? 152 : 68;
-                  }
-                } else if (part.includes('door')) {
-                  if (part.includes('rear')) {
-                    cy = 245;
-                    cx = side === 'right' ? 154 : 66;
-                  } else {
-                    cy = 165;
-                    cx = side === 'right' ? 154 : 66;
-                  }
-                } else if (part.includes('wheel') || part.includes('rim') || part.includes('tire')) {
-                  if (part.includes('front')) {
-                    cx = side === 'right' ? 182 : 38;
-                    cy = 104;
-                  } else {
-                    cx = side === 'right' ? 182 : 38;
-                    cy = 334;
-                  }
-                } else if (part.includes('mirror')) {
-                  cx = side === 'right' ? 180 : 40;
-                  cy = 142;
-                } else {
-                  if (side === 'left') { cx = 68; cy = 220; }
-                  else if (side === 'right') { cx = 152; cy = 220; }
-                  else { cx = 110; cy = 220; }
-                }
-
-                // De-conflict overlapping pin markers if multiple findings map to near-identical spots
-                if (idx > 0 && idx % 2 === 1) {
-                  cy += (cy > 220 ? -12 : 12);
-                }
-
+              {/* Dynamic SVG Pin Markers directly anchored to resolved vector coordinates */}
+              {placedPins.map(({ item, idx, cx, cy }) => {
+                const isLocked = idx >= 3;
                 const pinColor = item.severity === 'Severe' ? '#DC2626' : item.severity === 'Moderate' ? '#DC2626' : '#D97706';
 
                 return (
                   <g 
                     key={item.finding_id || idx}
-                    role="button" tabIndex={0} aria-label={`View damage photo ${idx + 1}: ${getSanitizedVehiclePart(item)}`}
-                    onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setActiveBoxModal({ item }); } }}
-                    className="cursor-pointer"
+                    role="button" tabIndex={0} 
+                    aria-label={isLocked ? `Damage point ${idx + 1}: Locked (Unlock Full Report)` : `View damage photo ${idx + 1}: ${getSanitizedVehiclePart(item)}`}
+                    onKeyDown={(event) => { 
+                      if (event.key === 'Enter' || event.key === ' ') { 
+                        event.preventDefault(); 
+                        if (isLocked) {
+                          toast.info(`Damage #${idx + 1} (${getSanitizedVehiclePart(item)}) is locked. Unlock the full report to view photo.`);
+                          setCurrentStep('paywall');
+                        } else {
+                          setActiveBoxModal({ item }); 
+                        }
+                      } 
+                    }}
+                    className="cursor-pointer hover:opacity-90 active:opacity-80 select-none"
                     onClick={() => {
-                      const displaySrc = getFindingEvidence(item, photos).src;
-                      setActiveBoxModal({ item });
+                      if (isLocked) {
+                        toast.info(`Damage #${idx + 1} (${getSanitizedVehiclePart(item)}) is locked. Unlock the full report to view photo.`);
+                        setCurrentStep('paywall');
+                      } else {
+                        setActiveBoxModal({ item });
+                      }
                     }}
                   >
                     <circle 
@@ -287,38 +337,51 @@ export default function CarMapResults({
             const displaySrc = getFindingEvidence(item, photos).src;
 
             return (
-              <div key={item.finding_id || idx} className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-slate-300 transition-colors">
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="relative shrink-0 w-20 h-20 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
-                    {displaySrc ? <img src={displaySrc} alt={item.vehicle_part} className="w-full h-full object-cover" /> : <span className="flex h-full items-center p-2 text-xs">Photo unavailable</span>}
-                    <span className="absolute top-1 left-1 w-5 h-5 rounded-full bg-slate-900 text-white font-extrabold text-[10px] flex items-center justify-center shadow-xs">
-                      {idx + 1}
+              <div 
+                key={item.finding_id || idx} 
+                className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs hover:border-slate-300 transition-all flex flex-col gap-3.5"
+              >
+                {/* Top Section: Photo Thumbnail + Title & Info + (Severity Pill & Action Button) */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="relative shrink-0 w-16 h-16 sm:w-18 sm:h-18 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-2xs">
+                      {displaySrc ? <img src={displaySrc} alt={item.vehicle_part} className="w-full h-full object-cover" /> : <span className="flex h-full items-center p-2 text-xs">Photo unavailable</span>}
+                      <span className="absolute top-1 left-1 w-5 h-5 rounded-full bg-slate-900 text-white font-black text-[10px] flex items-center justify-center shadow-xs">
+                        {idx + 1}
+                      </span>
+                    </div>
+                    <div className="min-w-0 wrap-anywhere">
+                      <h4 className="font-extrabold text-base text-slate-900 capitalize leading-snug">{getSanitizedVehiclePart(item)}</h4>
+                      <p className="text-xs text-slate-500 font-medium mt-0.5 capitalize">
+                        {item.damage_type?.replace(/_/g, ' ')} • <span className="text-slate-800 font-bold">{Math.round((item.confidence ?? 0.92) * 100)}% confidence</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Severity Badge & View Photo Button */}
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 shrink-0">
+                    <span className={`px-3 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase shrink-0 ${
+                      item.severity === 'Severe' ? 'bg-red-100 text-red-700 border border-red-200' : item.severity === 'Moderate' ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-amber-100 text-amber-800 border border-amber-200'
+                    }`}>
+                      {(item.severity || 'Minor').toUpperCase()}
                     </span>
-                  </div>
-                  <div className="min-w-0 wrap-anywhere">
-                    <h4 className="font-extrabold text-base text-slate-900 capitalize">{getSanitizedVehiclePart(item)}</h4>
-                    <p className="text-xs text-slate-500 mt-0.5 capitalize">{item.damage_type?.replace(/_/g, ' ')}</p>
-                    <p className="text-[11px] text-slate-400 font-semibold mt-1">{Math.round((item.confidence ?? 0.92) * 100)}% confidence</p>
+
+                    <button type="button"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 hover:text-sky-800 px-3 py-1.5 rounded-xl border border-sky-200 cursor-pointer transition-all active:scale-95 whitespace-nowrap" 
+                      onClick={() => setActiveBoxModal({ item })}
+                    >
+                      <Eye className="w-3.5 h-3.5 text-sky-600" />
+                      <span>View Photo</span>
+                    </button>
                   </div>
                 </div>
 
-                <div className="flex sm:flex-col items-center sm:items-end justify-between gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase ${
-                    item.severity === 'Severe' ? 'bg-red-100 text-red-700' : item.severity === 'Moderate' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800'
-                  }`}>
-                    {(item.severity || 'Minor').toUpperCase()}
-                  </span>
-
-                  <button type="button"
-                    className="min-h-9 inline-flex items-center gap-1.5 text-xs font-bold text-sky-600 bg-sky-50 hover:bg-sky-100 hover:text-sky-700 px-3 py-1.5 rounded-xl border border-sky-200/60 cursor-pointer transition-all active:scale-95" 
-                    onClick={() => {
-                      setActiveBoxModal({ item });
-                    }}
-                  >
-                    <Eye className="w-3.5 h-3.5 text-sky-600" />
-                    <span>View photo</span>
-                  </button>
-                </div>
+                {/* Bottom Section: AI Damage Description */}
+                {item.description && (
+                  <p className="text-xs text-slate-600 leading-relaxed bg-slate-50/80 p-3 rounded-2xl border border-slate-100/90">
+                    {item.description}
+                  </p>
+                )}
               </div>
             );
           })}

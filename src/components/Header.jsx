@@ -2,10 +2,21 @@
 
 import React from 'react';
 
-export default function Header({ setCurrentStep }) {
+export default function Header({ setCurrentStep, currentStep }) {
+  const handleLogoClick = () => {
+    if (currentStep === 'paywall') {
+      setCurrentStep('results');
+    } else if (currentStep === 'results' || currentStep === 'unlocked') {
+      // User is viewing active results, keep them safe
+      setCurrentStep('results');
+    } else {
+      setCurrentStep('checklist');
+    }
+  };
+
   return (
     <header className="w-full bg-white border-b border-slate-200 px-4 md:px-8 h-16 flex items-center justify-between gap-2 sticky top-0 z-40 shadow-xs">
-      <button type="button" aria-label="Return to photo checklist" className="flex min-h-11 items-center gap-2 cursor-pointer text-left" onClick={() => setCurrentStep('checklist')}>
+      <button type="button" aria-label="CarsInsure AI Home" className="flex min-h-11 items-center gap-2 cursor-pointer text-left" onClick={handleLogoClick}>
         <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-lg shadow-sm">
           C
         </div>

@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Camera, Image, Check, AlertTriangle, Sparkles, ChevronRight } from 'lucide-react';
+import { Camera, Image, Check, AlertTriangle, Loader2, Sparkles, ChevronRight } from 'lucide-react';
 
 /**
  * Detects whether the current device has at least one camera (videoinput).
@@ -209,16 +209,22 @@ export default function PhotoChecklist({
           <button
             onClick={handleAnalyzePhotos}
             disabled={isUploading || capturedCount === 0}
-            className="w-full min-h-12 px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed transition-all"
+            className={`w-full min-h-12 px-6 py-3 font-bold text-sm rounded-2xl flex items-center justify-center gap-2.5 transition-all shadow-md ${
+              isUploading 
+                ? 'bg-slate-900 text-white cursor-wait opacity-95' 
+                : capturedCount === 0 
+                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' 
+                  : 'bg-slate-900 hover:bg-slate-800 text-white cursor-pointer active:scale-98'
+            }`}
           >
             {isUploading ? (
               <>
-                <Sparkles className="w-4 h-4 animate-spin text-sky-400" />
-                Uploading & Processing…
+                <Loader2 className="w-5 h-5 animate-spin text-sky-400" />
+                <span className="font-bold text-white tracking-wide">Uploading & Processing Photos…</span>
               </>
             ) : (
               <>
-                Analyse Vehicle ({capturedCount}/14 photos captured)
+                <span>Analyse Vehicle ({capturedCount}/14 photos captured)</span>
                 <ChevronRight className="w-4 h-4 text-sky-400" />
               </>
             )}

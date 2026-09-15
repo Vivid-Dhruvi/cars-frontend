@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CreditCard, Lock, ArrowRight, Sparkles } from 'lucide-react';
+import { CreditCard, Lock, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react';
 
 export default function PaywallForm({ 
   userInfo, 
@@ -12,7 +12,18 @@ export default function PaywallForm({
   setCurrentStep 
 }) {
   return (
-    <div className="max-w-md mx-auto bg-white rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-md flex flex-col gap-5">
+    <div className="max-w-md mx-auto bg-white rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-md flex flex-col gap-4">
+      <div className="flex items-center justify-between -mb-1">
+        <button 
+          type="button" 
+          onClick={() => setCurrentStep('results')}
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 cursor-pointer py-1.5 px-3 rounded-xl hover:bg-slate-100 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Results</span>
+        </button>
+      </div>
+
       <div className="text-center">
         <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-100 text-sky-600 flex items-center justify-center mx-auto mb-3">
           <CreditCard className="w-6 h-6" />
@@ -56,7 +67,7 @@ export default function PaywallForm({
             placeholder="e.g. John Doe"
             value={userInfo.name}
             onChange={(e) => setUserInfo({...userInfo, name: e.target.value})}
-            className="w-full h-11 px-3 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50"
+            className="w-full h-11 px-3 border border-slate-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50 transition-all"
           />
         </div>
 
@@ -68,7 +79,7 @@ export default function PaywallForm({
             placeholder="e.g. john@example.com"
             value={userInfo.email}
             onChange={(e) => setUserInfo({...userInfo, email: e.target.value})}
-            className="w-full h-11 px-3 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50"
+            className="w-full h-11 px-3 border border-slate-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50 transition-all"
           />
         </div>
 

@@ -32,8 +32,8 @@ export default function DamagePhotoDialog({ item, photos, title, onClose }) {
             </p>
           </div>
           <button type="button" autoFocus aria-label="Close damage photo" onClick={onClose}
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-colors">
-            <X className="w-5 h-5" />
+            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-colors cursor-pointer active:scale-95">
+            <X className="w-5 h-5 text-slate-700 pointer-events-none" />
           </button>
         </header>
         <div className="min-h-0 overflow-y-auto p-4 sm:px-6">
@@ -53,7 +53,7 @@ export default function DamagePhotoDialog({ item, photos, title, onClose }) {
           </p>
         </div>
         <footer className="shrink-0 border-t border-slate-100 p-4 sm:px-6">
-          <button type="button" onClick={onClose} className="min-h-11 w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white hover:bg-slate-800">Close Overlay</button>
+          <button type="button" onClick={onClose} className="min-h-11 w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white hover:bg-slate-800 cursor-pointer transition-colors active:scale-98">Close Overlay</button>
         </footer>
       </div>
     </dialog>

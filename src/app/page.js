@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import PhotoChecklist from '@/components/PhotoChecklist';
@@ -9,8 +9,39 @@ import PaywallForm from '@/components/PaywallForm';
 import UnlockedReport from '@/components/UnlockedReport';
 
 export default function App() {
-  const [currentStep, setCurrentStep] = useState('checklist'); // checklist, results, paywall, unlocked
+  const [currentStep, setCurrentStepState] = useState('checklist'); // checklist, results, paywall, unlocked
   
+  // Navigation wrapper that updates state and keeps browser history in sync
+  const setCurrentStep = useCallback((newStep, pushHistory = true) => {
+    setCurrentStepState(newStep);
+    if (typeof window !== 'undefined' && pushHistory) {
+      try {
+        window.history.pushState({ step: newStep }, '', window.location.pathname);
+      } catch (e) {}
+    }
+  }, []);
+
+  // Listen to browser Back / Forward hardware or browser navigation
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Set initial history state
+    try {
+      window.history.replaceState({ step: 'checklist' }, '', window.location.pathname);
+    } catch (e) {}
+
+    const handlePopState = (e) => {
+      if (e.state && e.state.step) {
+        setCurrentStepState(e.state.step);
+      } else {
+        setCurrentStepState('checklist');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   // Vehicle Details State (Inputted dynamically by user or contract)
   const [vehicleData, setVehicleData] = useState({
     company: '',
@@ -33,6 +64,35 @@ export default function App() {
   const [isUploading, setIsUploading] = useState(false);
   const [activeInspectionId, setActiveInspectionId] = useState(null);
   const [analysisResults, setAnalysisResults] = useState(null);
+
+  // Restore analysis results and session from sessionStorage if user reloads
+  useEffect(() => {
+    try {
+      const savedInspId = sessionStorage.getItem('ci_active_id');
+      const savedResults = sessionStorage.getItem('ci_analysis_results');
+      const savedStep = sessionStorage.getItem('ci_step');
+
+      if (savedInspId) setActiveInspectionId(savedInspId);
+      if (savedResults) {
+        const parsed = JSON.parse(savedResults);
+        setAnalysisResults(parsed);
+        if (savedStep && ['results', 'paywall', 'unlocked'].includes(savedStep)) {
+          setCurrentStepState(savedStep);
+        }
+      }
+    } catch (e) {
+      console.warn('Session restoration note:', e);
+    }
+  }, []);
+
+  // Persist current inspection session in sessionStorage
+  useEffect(() => {
+    try {
+      if (activeInspectionId) sessionStorage.setItem('ci_active_id', activeInspectionId);
+      if (analysisResults) sessionStorage.setItem('ci_analysis_results', JSON.stringify(analysisResults));
+      sessionStorage.setItem('ci_step', currentStep);
+    } catch (e) {}
+  }, [currentStep, activeInspectionId, analysisResults]);
 
   // Helper to compress high-res phone camera photos so Vercel 4.5MB payload limit is never exceeded
   const compressImage = (file) => {
@@ -144,7 +204,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased flex flex-col items-center justify-start pb-12">
       {/* Top Header */}
-      <Header setCurrentStep={setCurrentStep} />
+      <Header setCurrentStep={setCurrentStep} currentStep={currentStep} />
 
       {/* Main Content Area */}
       <main className="w-full max-w-6xl px-4 md:px-8 pt-6">
@@ -187,6 +247,7 @@ export default function App() {
         {/* STEP 4: UNLOCKED REPORT */}
         {currentStep === 'unlocked' && (
           <UnlockedReport 
+            vehicleData={vehicleData}
             userInfo={userInfo}
             analysisResults={analysisResults}
             activeInspectionId={activeInspectionId}
