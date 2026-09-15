@@ -4,14 +4,7 @@ import React from 'react';
 
 export default function Header({ setCurrentStep, currentStep }) {
   const handleLogoClick = () => {
-    if (currentStep === 'paywall') {
-      setCurrentStep('results');
-    } else if (currentStep === 'results' || currentStep === 'unlocked') {
-      // User is viewing active results, keep them safe
-      setCurrentStep('results');
-    } else {
-      setCurrentStep('checklist');
-    }
+    setCurrentStep('checklist');
   };
 
   return (

@@ -174,7 +174,7 @@ function getResolvedCarPins(findings) {
 }
 
 export default function UnlockedReport({ 
-  vehicleData,
+  vehicleData, 
   userInfo, 
   analysisResults, 
   activeInspectionId, 
@@ -184,6 +184,11 @@ export default function UnlockedReport({
   const [activeBoxModal, setActiveBoxModal] = React.useState(null);
   const [hoveredIdx, setHoveredIdx] = React.useState(null);
   const placedPins = React.useMemo(() => getResolvedCarPins(findings), [findings]);
+  const activePhotos = React.useMemo(() => {
+    return (photos && Object.values(photos).some(p => p && (p.url || typeof p === 'string')))
+      ? photos
+      : (analysisResults?.photos || {});
+  }, [photos, analysisResults]);
 
   const downloadPdf = () => {
     const inspId = activeInspectionId || analysisResults?.inspection_id || 'INS-DEMO';
@@ -197,7 +202,7 @@ export default function UnlockedReport({
       {activeBoxModal && (
         <DamagePhotoDialog 
           item={activeBoxModal.item} 
-          photos={photos} 
+          photos={activePhotos} 
           title={getSanitizedVehiclePart(activeBoxModal.item)} 
           onClose={() => setActiveBoxModal(null)} 
         />
@@ -365,7 +370,7 @@ export default function UnlockedReport({
           {findings.length === 0 && <p className="rounded-2xl bg-white p-6 text-sm text-slate-600 border border-slate-200">No damage findings were returned for this inspection.</p>}
           
           {findings.map((item, idx) => {
-            const displaySrc = getFindingEvidence(item, photos).src;
+            const displaySrc = getFindingEvidence(item, activePhotos).src;
             const isHovered = hoveredIdx === idx;
 
             return (

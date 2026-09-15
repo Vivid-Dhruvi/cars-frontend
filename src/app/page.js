@@ -65,34 +65,12 @@ export default function App() {
   const [activeInspectionId, setActiveInspectionId] = useState(null);
   const [analysisResults, setAnalysisResults] = useState(null);
 
-  // Restore analysis results and session from sessionStorage if user reloads
+  // Clear any cached session storage on page load/refresh so every refresh starts completely fresh
   useEffect(() => {
     try {
-      const savedInspId = sessionStorage.getItem('ci_active_id');
-      const savedResults = sessionStorage.getItem('ci_analysis_results');
-      const savedStep = sessionStorage.getItem('ci_step');
-
-      if (savedInspId) setActiveInspectionId(savedInspId);
-      if (savedResults) {
-        const parsed = JSON.parse(savedResults);
-        setAnalysisResults(parsed);
-        if (savedStep && ['results', 'paywall', 'unlocked'].includes(savedStep)) {
-          setCurrentStepState(savedStep);
-        }
-      }
-    } catch (e) {
-      console.warn('Session restoration note:', e);
-    }
-  }, []);
-
-  // Persist current inspection session in sessionStorage
-  useEffect(() => {
-    try {
-      if (activeInspectionId) sessionStorage.setItem('ci_active_id', activeInspectionId);
-      if (analysisResults) sessionStorage.setItem('ci_analysis_results', JSON.stringify(analysisResults));
-      sessionStorage.setItem('ci_step', currentStep);
+      sessionStorage.clear();
     } catch (e) {}
-  }, [currentStep, activeInspectionId, analysisResults]);
+  }, []);
 
   // Helper to compress high-res phone camera photos so Vercel 4.5MB payload limit is never exceeded
   const compressImage = (file) => {
@@ -101,10 +79,9 @@ export default function App() {
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
-          const canvas = document.createElement('canvas');
+          const maxDim = 900; // Optimal resolution for fast encoding & Gemini Vision
           let width = img.width;
           let height = img.height;
-          const maxDim = 1280; // Ideal resolution for Gemini Vision AI
 
           if (width > maxDim || height > maxDim) {
             if (width > height) {
@@ -116,11 +93,12 @@ export default function App() {
             }
           }
 
+          const canvas = document.createElement('canvas');
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.65);
           resolve(compressedBase64);
         };
         img.src = e.target.result;
@@ -129,40 +107,20 @@ export default function App() {
     });
   };
 
-  // Real backend file upload handler & Base64 encoder for Gemini AI
+  // Instant local photo selection & Base64 encoder (No AI prompt runs until full batch submission)
   const handleFileUpload = async (id, file) => {
     if (!file) return;
-    setIsUploading(true);
 
     try {
       const base64Data = await compressImage(file);
-      
-      const formData = new FormData();
-      formData.append('photo', file);
-
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      try {
-        const res = await fetch(`${API_BASE}/api/upload`, {
-          method: 'POST',
-          body: formData
-        });
-        const data = await res.json();
-        setPhotos(prev => ({ 
-          ...prev, 
-          [id]: { url: base64Data, filename: data.filename || `IMAGE_${id}` } 
-        }));
-        toast.success(`IMAGE_${id} captured & compressed for Gemini AI!`);
-      } catch (err) {
-        setPhotos(prev => ({ 
-          ...prev, 
-          [id]: { url: base64Data, filename: `IMAGE_${id}` } 
-        }));
-        toast.success(`IMAGE_${id} stored locally for AI analysis.`);
-      }
+      setPhotos(prev => ({ 
+        ...prev, 
+        [id]: { url: base64Data, filename: `IMAGE_${id}` } 
+      }));
+      toast.success(`IMAGE_${id} captured!`);
     } catch (err) {
       console.error('Compress Error:', err);
-    } finally {
-      setIsUploading(false);
+      toast.error('Failed to process photo.');
     }
   };
 

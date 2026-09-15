@@ -184,10 +184,22 @@ export default function CarMapResults({
   const findings = analysisResults?.findings || [];
   const [activeBoxModal, setActiveBoxModal] = React.useState(null);
   const placedPins = React.useMemo(() => getResolvedCarPins(findings), [findings]);
+  const activePhotos = React.useMemo(() => {
+    return (photos && Object.values(photos).some(p => p && (p.url || typeof p === 'string')))
+      ? photos
+      : (analysisResults?.photos || {});
+  }, [photos, analysisResults]);
 
   return (
     <div className="flex flex-col gap-6">
-      {activeBoxModal && <DamagePhotoDialog item={activeBoxModal.item} photos={photos} title={getSanitizedVehiclePart(activeBoxModal.item)} onClose={() => setActiveBoxModal(null)} />}
+      {activeBoxModal && (
+        <DamagePhotoDialog 
+          item={activeBoxModal.item} 
+          photos={activePhotos} 
+          title={getSanitizedVehiclePart(activeBoxModal.item)} 
+          onClose={() => setActiveBoxModal(null)} 
+        />
+      )}
 
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -334,7 +346,7 @@ export default function CarMapResults({
 
           {findings.length === 0 && <p className="rounded-xl bg-white p-4 text-sm text-slate-600">No damage findings were returned for this inspection.</p>}
           {findings.slice(0, 3).map((item, idx) => {
-            const displaySrc = getFindingEvidence(item, photos).src;
+            const displaySrc = getFindingEvidence(item, activePhotos).src;
 
             return (
               <div 
