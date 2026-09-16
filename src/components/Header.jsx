@@ -4,6 +4,16 @@ import React from 'react';
 
 export default function Header({ setCurrentStep, currentStep }) {
   const handleLogoClick = () => {
+    try {
+      localStorage.removeItem('carsinsure_step');
+      localStorage.removeItem('carsinsure_active_inspection_id');
+      localStorage.removeItem('carsinsure_analysis_results');
+      localStorage.removeItem('carsinsure_photos');
+      localStorage.removeItem('carsinsure_vehicle_data');
+      localStorage.removeItem('carsinsure_pending_inspection_id');
+      localStorage.removeItem('carsinsure_user_name');
+      localStorage.removeItem('carsinsure_user_email');
+    } catch (e) {}
     setCurrentStep('checklist');
   };
 

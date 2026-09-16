@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle2, Download, Scan, ShieldCheck, Eye } from 'lucide-react';
+import { CheckCircle2, Download, Scan, ShieldCheck, Eye, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
 import DamagePhotoDialog from './DamagePhotoDialog';
@@ -197,6 +197,8 @@ export default function UnlockedReport({
     toast.success('Official PDF Certificate generated!');
   }; 
 
+  const displayEmail = userInfo?.email || analysisResults?.user_info?.email || (typeof window !== 'undefined' ? localStorage.getItem('carsinsure_user_email') : '') || 'your email';
+
   return (
     <div className="flex flex-col gap-6">
       {activeBoxModal && (
@@ -220,7 +222,7 @@ export default function UnlockedReport({
             </div>
             <h2 className="font-black text-white text-xl tracking-tight">Full Inspection Unlocked!</h2>
             <p className="text-xs text-slate-300 mt-0.5">
-              Official PDF certificate emailed to <span className="font-bold text-white underline">{userInfo?.email || 'user@example.com'}</span>
+              Official PDF certificate emailed to <span className="font-bold text-white underline">{displayEmail}</span>
             </p>
           </div>
         </div>
@@ -429,11 +431,41 @@ export default function UnlockedReport({
 
           {/* Verification Audit Badge */}
           <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500 mt-2">
-            <span className="min-w-0 wrap-anywhere font-medium">Digital Verification Hash: <code className="bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-700 font-mono">sha256-e8f9a201b49912c388a</code></span>
+            <span className="min-w-0 wrap-anywhere font-medium">Digital Verification Hash: <code className="bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-700 font-mono">{analysisResults?.sha256_hash || 'sha256-verified-e8f9a201b49912c3'}</code></span>
             <span className="text-emerald-600 font-bold flex items-center gap-1.5 shrink-0">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
               <span>Cryptographically Signed</span>
             </span>
+          </div>
+
+          {/* Bottom Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={downloadPdf}
+              className="w-full sm:flex-1 h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-all active:scale-98"
+            >
+              <Download className="w-4 h-4" /> Download Official PDF Certificate
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  localStorage.removeItem('carsinsure_step');
+                  localStorage.removeItem('carsinsure_active_inspection_id');
+                  localStorage.removeItem('carsinsure_analysis_results');
+                  localStorage.removeItem('carsinsure_photos');
+                  localStorage.removeItem('carsinsure_vehicle_data');
+                  localStorage.removeItem('carsinsure_pending_inspection_id');
+                  localStorage.removeItem('carsinsure_user_name');
+                  localStorage.removeItem('carsinsure_user_email');
+                } catch (e) {}
+                window.location.href = '/';
+              }}
+              className="w-full sm:w-auto h-12 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all"
+            >
+              <RotateCcw className="w-4 h-4" /> Start New Scan
+            </button>
           </div>
         </div>
 

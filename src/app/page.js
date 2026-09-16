@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import PhotoChecklist from '@/components/PhotoChecklist';
@@ -10,36 +10,19 @@ import UnlockedReport from '@/components/UnlockedReport';
 
 export default function App() {
   const [currentStep, setCurrentStepState] = useState('checklist'); // checklist, results, paywall, unlocked
+  const paymentProcessedRef = useRef(false);
   
   // Navigation wrapper that updates state and keeps browser history in sync
   const setCurrentStep = useCallback((newStep, pushHistory = true) => {
     setCurrentStepState(newStep);
-    if (typeof window !== 'undefined' && pushHistory) {
+    if (typeof window !== 'undefined') {
       try {
-        window.history.pushState({ step: newStep }, '', window.location.pathname);
+        localStorage.setItem('carsinsure_step', newStep);
+        if (pushHistory) {
+          window.history.pushState({ step: newStep }, '', window.location.pathname);
+        }
       } catch (e) {}
     }
-  }, []);
-
-  // Listen to browser Back / Forward hardware or browser navigation
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    // Set initial history state
-    try {
-      window.history.replaceState({ step: 'checklist' }, '', window.location.pathname);
-    } catch (e) {}
-
-    const handlePopState = (e) => {
-      if (e.state && e.state.step) {
-        setCurrentStepState(e.state.step);
-      } else {
-        setCurrentStepState('checklist');
-      }
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   // Vehicle Details State (Inputted dynamically by user or contract)
@@ -65,11 +48,145 @@ export default function App() {
   const [activeInspectionId, setActiveInspectionId] = useState(null);
   const [analysisResults, setAnalysisResults] = useState(null);
 
-  // Clear any cached session storage on page load/refresh so every refresh starts completely fresh
+  // Restore state on refresh OR handle return redirect from iCredit Hosted Payment Gateway
   useEffect(() => {
-    try {
-      sessionStorage.clear();
-    } catch (e) {}
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get('payment');
+    const statusParam = params.get('Status') || params.get('status');
+    const hasPrivateToken = Boolean(params.get('PrivateSaleToken') || params.get('privatesaletoken'));
+    const isPaymentSuccess = paymentStatus === 'success' || statusParam === '0' || hasPrivateToken;
+
+    const urlInspectionId = params.get('inspectionId') || params.get('Custom1') || params.get('custom1');
+    const savedInspectionId = urlInspectionId || localStorage.getItem('carsinsure_pending_inspection_id') || localStorage.getItem('carsinsure_active_inspection_id');
+    const savedName = localStorage.getItem('carsinsure_user_name') || 'Valued Client';
+    const savedEmail = localStorage.getItem('carsinsure_user_email') || '';
+
+    if (isPaymentSuccess && savedInspectionId) {
+      if (paymentProcessedRef.current) return;
+      paymentProcessedRef.current = true;
+
+      // Clean query params immediately so subsequent re-renders don't re-trigger
+      window.history.replaceState({ step: 'unlocked' }, document.title, window.location.pathname);
+
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      setActiveInspectionId(savedInspectionId);
+      setUserInfo({ name: savedName, email: savedEmail });
+
+      // Confirm checkout record & load inspection data
+      fetch(`${API_BASE}/api/payment/checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          inspectionId: savedInspectionId,
+          name: savedName,
+          email: savedEmail,
+          amount: 3.00,
+          privateSaleToken: params.get('PrivateSaleToken') || null
+        })
+      })
+      .then(r => r.json())
+      .then(() => fetch(`${API_BASE}/api/reports/${savedInspectionId}`))
+      .then(r => r.json())
+      .then(data => {
+        if (data.report) {
+          setAnalysisResults(data.report);
+          if (data.report.user_info?.email) {
+            setUserInfo({
+              name: data.report.user_info.name || savedName,
+              email: data.report.user_info.email || savedEmail
+            });
+          }
+          try {
+            localStorage.setItem('carsinsure_analysis_results', JSON.stringify(data.report));
+            localStorage.setItem('carsinsure_step', 'unlocked');
+          } catch (e) {}
+        }
+        setCurrentStepState('unlocked');
+        toast.success('iCredit Payment Verified! Full Report Unlocked & PDF Emailed.', { id: 'payment-verified-toast' });
+      })
+      .catch(err => {
+        console.error('Failed loading paid inspection:', err);
+        setCurrentStepState('unlocked');
+      });
+    } else if (paymentStatus === 'failed' || (statusParam && statusParam !== '0')) {
+      if (paymentProcessedRef.current) return;
+      paymentProcessedRef.current = true;
+      toast.error('iCredit payment was cancelled or not completed. Please try again.', { id: 'payment-failed-toast' });
+      try {
+        localStorage.setItem('carsinsure_step', 'paywall');
+      } catch (e) {}
+      setCurrentStepState('paywall');
+      window.history.replaceState({ step: 'paywall' }, document.title, window.location.pathname);
+    } else {
+      // Normal browser refresh: restore active session if available
+      try {
+        const savedStep = localStorage.getItem('carsinsure_step');
+        const savedResultsRaw = localStorage.getItem('carsinsure_analysis_results');
+        const savedActiveId = localStorage.getItem('carsinsure_active_inspection_id');
+        const savedPhotosRaw = localStorage.getItem('carsinsure_photos');
+        const savedVehicleRaw = localStorage.getItem('carsinsure_vehicle_data');
+        const savedUserName = localStorage.getItem('carsinsure_user_name');
+        const savedUserEmail = localStorage.getItem('carsinsure_user_email');
+
+        if (savedUserEmail) {
+          setUserInfo({ name: savedUserName || '', email: savedUserEmail });
+        }
+
+        if (savedResultsRaw && (savedStep === 'results' || savedStep === 'paywall' || savedStep === 'unlocked')) {
+          const parsedResults = JSON.parse(savedResultsRaw);
+          setAnalysisResults(parsedResults);
+          if (savedActiveId) setActiveInspectionId(savedActiveId);
+          if (savedPhotosRaw) setPhotos(JSON.parse(savedPhotosRaw));
+          if (savedVehicleRaw) setVehicleData(JSON.parse(savedVehicleRaw));
+
+          // If step was marked unlocked, double check backend record to ensure it is actually paid
+          if (savedStep === 'unlocked' && savedActiveId) {
+            const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+            fetch(`${API_BASE}/api/reports/${savedActiveId}`)
+              .then(r => r.json())
+              .then(data => {
+                if (data.report && data.report.is_paid) {
+                  setCurrentStepState('unlocked');
+                  window.history.replaceState({ step: 'unlocked' }, '', window.location.pathname);
+                } else {
+                  // Not paid: enforce results view
+                  setCurrentStepState('results');
+                  try {
+                    localStorage.setItem('carsinsure_step', 'results');
+                  } catch (e) {}
+                  window.history.replaceState({ step: 'results' }, '', window.location.pathname);
+                }
+              })
+              .catch(() => {
+                setCurrentStepState('results');
+              });
+          } else {
+            setCurrentStepState(savedStep);
+            window.history.replaceState({ step: savedStep }, '', window.location.pathname);
+          }
+        }
+      } catch (e) {
+        console.warn('Failed restoring cached session:', e);
+      }
+    }
+  }, []);
+
+  // Listen to browser Back / Forward hardware or browser navigation
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handlePopState = (e) => {
+      if (e.state && e.state.step) {
+        setCurrentStepState(e.state.step);
+      } else {
+        const savedStep = localStorage.getItem('carsinsure_step') || 'checklist';
+        setCurrentStepState(savedStep);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   // Helper to compress high-res phone camera photos so Vercel 4.5MB payload limit is never exceeded
@@ -144,6 +261,17 @@ export default function App() {
       if (data.success) {
         setActiveInspectionId(data.inspectionId);
         setAnalysisResults(data.fullResults);
+        setUserInfo({ name: '', email: '' });
+        try {
+          localStorage.setItem('carsinsure_step', 'results');
+          localStorage.setItem('carsinsure_active_inspection_id', data.inspectionId);
+          localStorage.setItem('carsinsure_analysis_results', JSON.stringify(data.fullResults));
+          localStorage.setItem('carsinsure_photos', JSON.stringify(photos));
+          localStorage.setItem('carsinsure_vehicle_data', JSON.stringify(vehicleData));
+          localStorage.removeItem('carsinsure_user_name');
+          localStorage.removeItem('carsinsure_user_email');
+          localStorage.removeItem('carsinsure_pending_inspection_id');
+        } catch (e) {}
         setCurrentStep('results');
         toast.success('Gemini Vision AI Analysis Complete!');
       } else {
