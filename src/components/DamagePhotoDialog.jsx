@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef } from 'react';
-import { X } from 'lucide-react';
+import { X, Crosshair, ShieldAlert } from 'lucide-react';
 import { getFindingEvidence } from './findingEvidence.mjs';
 
 export default function DamagePhotoDialog({ item, photos, title, onClose }) {
@@ -21,39 +21,112 @@ export default function DamagePhotoDialog({ item, photos, title, onClose }) {
   }, []);
 
   return (
-    <dialog ref={dialogRef} aria-labelledby={titleId} onClose={(event) => { if (!event.currentTarget.open) onClose(); }}
-      className="damage-dialog m-auto w-[calc(100%-1.5rem)] max-w-2xl max-h-[calc(100dvh-1.5rem)] rounded-3xl border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl">
-      <div className="flex max-h-[calc(100dvh-1.5rem)] flex-col">
-        <header className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 p-4 sm:px-6">
+    <dialog 
+      ref={dialogRef} 
+      aria-labelledby={titleId} 
+      onClose={(event) => { if (!event.currentTarget.open) onClose(); }}
+      className="damage-dialog m-auto w-[calc(100%-2rem)] max-w-2xl max-h-[calc(100dvh-2rem)] rounded-3xl border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl overflow-hidden"
+    >
+      <div className="flex max-h-[calc(100dvh-2rem)] flex-col bg-white">
+        {/* Clean Light Header */}
+        <header className="flex shrink-0 items-center justify-between gap-4 border-b border-slate-100 p-4 sm:px-6 bg-white">
           <div className="min-w-0">
-            <h3 id={titleId} className="text-base font-extrabold capitalize wrap-anywhere">{title} Damage Photo</h3>
-            <p className="mt-1 text-xs text-slate-600 capitalize wrap-anywhere">
-              {item.damage_type?.replace(/_/g, ' ')}{imageId ? ` · ${imageId}` : ''}
+            <h3 id={titleId} className="text-base sm:text-lg font-bold capitalize text-slate-900 truncate">
+              {title} Evidence Photo
+            </h3>
+            <p className="text-xs text-slate-500 capitalize truncate flex items-center gap-1.5 mt-0.5">
+              <span>{item.damage_type?.replace(/_/g, ' ')}</span>
+              {imageId && (
+                <>
+                  <span className="text-slate-300">•</span>
+                  <span className="font-mono text-slate-600">{imageId}</span>
+                </>
+              )}
             </p>
           </div>
-          <button type="button" autoFocus aria-label="Close damage photo" onClick={onClose}
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-colors cursor-pointer active:scale-95">
-            <X className="w-5 h-5 text-slate-700 pointer-events-none" />
+
+          <button 
+            type="button" 
+            autoFocus 
+            aria-label="Close damage photo" 
+            onClick={onClose}
+            className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 hover:text-slate-900 transition-colors cursor-pointer active:scale-95"
+          >
+            <X className="w-4 h-4" />
           </button>
         </header>
-        <div className="min-h-0 overflow-y-auto p-4 sm:px-6">
+
+        {/* Clean Light Photo Stage */}
+        <div className="min-h-0 overflow-y-auto p-4 sm:p-6 flex flex-col gap-3 bg-white">
           {src ? (
-            <div className="flex justify-center rounded-xl bg-slate-950 p-2">
-              <div className="relative max-w-full self-start">
-                <img src={src} alt={`${title}: supporting vehicle photo`} className="block h-auto max-h-[55dvh] w-auto max-w-full" />
-                {box && <svg aria-label="Detected damage boundary" className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 1000 1000" preserveAspectRatio="none">
-                  <rect x={box[1]} y={box[0]} width={box[3] - box[1]} height={box[2] - box[0]}
-                    fill="rgba(239,68,68,0.18)" stroke="#ef4444" strokeWidth="3" vectorEffect="non-scaling-stroke" />
-                </svg>}
+            <div className="flex justify-center rounded-2xl bg-slate-100 p-2 sm:p-3 border border-slate-200">
+              <div className="relative max-w-full self-start rounded-xl overflow-hidden shadow-xs">
+                <img 
+                  src={src} 
+                  alt={`${title}: supporting vehicle photo`} 
+                  className="block h-auto max-h-[55dvh] w-auto max-w-full object-contain" 
+                />
+
+                {/* Precision Bounding Box Overlay */}
+                {box && (
+                  <svg 
+                    aria-label="Detected damage boundary" 
+                    className="pointer-events-none absolute inset-0 h-full w-full" 
+                    viewBox="0 0 1000 1000" 
+                    preserveAspectRatio="none"
+                  >
+                    <rect 
+                      x={box[1]} 
+                      y={box[0]} 
+                      width={box[3] - box[1]} 
+                      height={box[2] - box[0]}
+                      fill="rgba(239, 68, 68, 0.2)" 
+                      stroke="#DC2626" 
+                      strokeWidth="3" 
+                      vectorEffect="non-scaling-stroke" 
+                    />
+                  </svg>
+                )}
               </div>
             </div>
-          ) : <p className="py-6 text-sm text-slate-600">The supporting photo is unavailable.</p>}
-          <p className="mt-3 text-sm text-slate-600 wrap-anywhere">
-            {box ? `${item.severity || 'Uncertain'} damage · Box: [${box.join(', ')}]` : 'No verified bounding box is available for this photo.'}
-          </p>
+          ) : (
+            <p className="py-12 text-center text-xs text-slate-500">
+              The supporting vehicle photo is currently unavailable.
+            </p>
+          )}
+
+          {/* Clean Light Metadata Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+            <span className="text-slate-600 font-medium flex items-center gap-1.5">
+              <Crosshair className="w-4 h-4 text-slate-400" />
+              <span>
+                {box 
+                  ? `Coordinates: [${box.join(', ')}]` 
+                  : 'Full angle visual coverage'}
+              </span>
+            </span>
+
+            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+              item.severity === 'Severe' 
+                ? 'bg-red-100 text-red-800 border border-red-200' 
+                : item.severity === 'Moderate' 
+                ? 'bg-rose-100 text-rose-800 border border-rose-200' 
+                : 'bg-amber-100 text-amber-800 border border-amber-200'
+            }`}>
+              {(item.severity || 'Minor')} Severity
+            </span>
+          </div>
         </div>
-        <footer className="shrink-0 border-t border-slate-100 p-4 sm:px-6">
-          <button type="button" onClick={onClose} className="min-h-11 w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white hover:bg-slate-800 cursor-pointer transition-colors active:scale-98">Close Overlay</button>
+
+        {/* Clean Light Footer */}
+        <footer className="shrink-0 border-t border-slate-100 p-4 sm:px-6 bg-white">
+          <button 
+            type="button" 
+            onClick={onClose} 
+            className="min-h-11 w-full rounded-xl bg-[#022a5b] hover:bg-[#033b7e] px-4 py-2.5 text-xs font-bold text-white cursor-pointer transition-colors active:scale-98 shadow-xs"
+          >
+            Close Photo View
+          </button>
         </footer>
       </div>
     </dialog>

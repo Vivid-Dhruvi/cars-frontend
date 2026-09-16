@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ArrowLeft, Lock, ArrowRight, Eye, ShieldCheck, CheckCircle2, Download, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Lock, ArrowRight, Eye, ShieldCheck, CheckCircle2, Download, RotateCcw, Car } from 'lucide-react';
 import { toast } from 'sonner';
 
 import DamagePhotoDialog from './DamagePhotoDialog';
@@ -31,12 +31,10 @@ const getSanitizedVehiclePart = (item) => {
     'IMAGE_14': 'Front Right Wheel'
   };
 
-  // IMAGE_02 is strictly Windshield & Hood
   if (paddedKey === 'IMAGE_02') {
     return 'Windshield & Hood';
   }
 
-  // If slot is non-wheel (1 to 10), but server returned a wheel label, override with exact angle label
   if (paddedNum < 11) {
     const currentPart = (item?.vehicle_part || '').toLowerCase();
     if (currentPart.includes('wheel') || currentPart.includes('rim')) {
@@ -50,7 +48,7 @@ const getSanitizedVehiclePart = (item) => {
 
 // Helper function to resolve dynamic non-overlapping 2D car map coordinates for all findings
 function getResolvedCarPins(findings) {
-  const MIN_PIN_DISTANCE = 30; // Minimum center-to-center distance for 13px radius circles (with padding)
+  const MIN_PIN_DISTANCE = 32;
   const placedPins = [];
 
   findings.forEach((item, idx) => {
@@ -140,7 +138,6 @@ function getResolvedCarPins(findings) {
       else { cx = 110; cy = 220; }
     }
 
-    // Dynamic collision resolution loop to ensure zero overlap between any pins
     let attempts = 0;
     let isColliding = true;
     while (isColliding && attempts < 20) {
@@ -165,7 +162,6 @@ function getResolvedCarPins(findings) {
       attempts++;
     }
 
-    // Keep pin comfortably inside SVG viewbox bounds
     cx = Math.max(36, Math.min(184, cx));
     cy = Math.max(38, Math.min(402, cy));
 
@@ -191,7 +187,7 @@ export default function CarMapResults({
   }, [photos, analysisResults]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       {activeBoxModal && (
         <DamagePhotoDialog 
           item={activeBoxModal.item} 
@@ -201,53 +197,74 @@ export default function CarMapResults({
         />
       )}
 
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* Top Header Navigation */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
         <div className="flex items-center gap-3">
-          <button aria-label="Back to photo checklist" onClick={() => setCurrentStep('checklist')} className="w-11 h-11 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50">
+          <button 
+            aria-label="Back to photo checklist" 
+            onClick={() => setCurrentStep('checklist')} 
+            className="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+          >
             <ArrowLeft className="w-4 h-4" />
           </button>
-          <h2 className="text-xl font-bold text-slate-900">Results</h2>
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 leading-tight">
+              Inspection Results & Visual Map
+            </h2>
+            <p className="text-xs text-slate-500">
+              {findings.length === 0 ? 'No damage detected' : `${findings.length} visual findings detected by Gemini Vision AI`}
+            </p>
+          </div>
         </div>
+
         <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${
-          findings.length === 0 ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'
+          findings.length === 0 
+            ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+            : 'bg-[#022a5b]/10 text-[#022a5b] border-[#022a5b]/20 font-bold'
         }`}>
-          {findings.length === 0 ? '✓ 0 Findings · Clean Vehicle' : `${Math.min(3, findings.length)} of ${findings.length} findings shown`}
+          {findings.length === 0 ? '✓ 0 Defects · Clean Vehicle' : `Preliminary: 3 of ${findings.length} findings shown`}
         </span>
       </div>
 
       {/* 2-Column Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         
-        {/* Left Column: 2D Top-Down Car Outline Map */}
-        <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-slate-200 shadow-sm text-center lg:sticky lg:top-24">
-          <h3 className="font-extrabold text-xl text-slate-900 mb-1">
-            {findings.length === 0 ? 'Inspection Passed' : 'Inspection complete'}
-          </h3>
-          <p className="text-xs text-slate-500 mb-5">
+        {/* Left Column: 2D Top-Down Car Outline Blueprint */}
+        <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-slate-200 shadow-xs text-center lg:sticky lg:top-24">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+              <Car className="w-4 h-4 text-[#022a5b]" />
+              <span>{findings.length === 0 ? 'Vehicle Passed' : 'Damage Coordinates Map'}</span>
+            </h3>
+            <span className="text-xs text-slate-500 font-medium">
+              Top-Down View
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mb-4 text-left">
             {findings.length === 0 
-              ? 'All visual angles verified in clean, undamaged condition.' 
-              : `We found ${findings.length} visible areas that may need attention.`}
+              ? 'All visual angles verified in undamaged condition.' 
+              : 'Click any numbered pin to inspect the photo and damage location.'}
           </p>
 
-          <div className="w-full h-96 bg-[#F1F5F9]/70 rounded-3xl border border-slate-200/80 relative flex items-center justify-center overflow-hidden p-6">
-            <svg className="h-full w-auto drop-shadow-xs" viewBox="0 0 220 440" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {/* Clean Light Car Schematic Container */}
+          <div className="w-full h-96 bg-slate-50 rounded-2xl border border-slate-200 relative flex items-center justify-center overflow-hidden p-4">
+            <svg className="h-full w-auto" viewBox="0 0 220 440" fill="none" xmlns="http://www.w3.org/2000/svg">
               {/* Outer Vehicle Body Shell */}
               <path 
                 d="M 60 45 C 60 25, 160 25, 160 45 L 170 120 C 180 160, 180 270, 170 320 L 160 395 C 160 415, 60 415, 60 395 L 50 320 C 40 270, 40 160, 50 120 Z" 
-                fill="#EEF2F6" 
+                fill="#E2E8F0" 
                 stroke="#94A3B8" 
-                strokeWidth="2.5" 
+                strokeWidth="2" 
               />
 
               {/* Inner Roof / Cabin Outlines */}
-              <rect x="62" y="180" width="96" height="110" rx="16" fill="none" stroke="#CBD5E1" strokeWidth="2" />
+              <rect x="62" y="180" width="96" height="110" rx="16" fill="#F1F5F9" stroke="#CBD5E1" strokeWidth="1.5" />
               
-              {/* Front Windshield (Light Soft Blue Glass) */}
-              <path d="M 62 135 C 75 125, 145 125, 158 135 C 152 165, 68 165, 62 135 Z" fill="#DCEAFE" stroke="#93C5FD" strokeWidth="1.5" />
+              {/* Front Windshield (Soft Blue Glass) */}
+              <path d="M 62 135 C 75 125, 145 125, 158 135 C 152 165, 68 165, 62 135 Z" fill="#BFDBFE" stroke="#93C5FD" strokeWidth="1.5" />
 
-              {/* Rear Glass (Light Soft Blue Glass) */}
-              <path d="M 64 300 C 75 290, 145 290, 156 300 C 150 330, 70 330, 64 300 Z" fill="#DCEAFE" stroke="#93C5FD" strokeWidth="1.5" />
+              {/* Rear Glass (Soft Blue Glass) */}
+              <path d="M 64 300 C 75 290, 145 290, 156 300 C 150 330, 70 330, 64 300 Z" fill="#BFDBFE" stroke="#93C5FD" strokeWidth="1.5" />
 
               {/* Headlights (Soft Yellow) */}
               <path d="M 58 35 C 70 32, 90 32, 92 40 L 54 44 Z" fill="#FDE68A" />
@@ -258,11 +275,11 @@ export default function CarMapResults({
               <path d="M 160 398 L 132 398 L 135 405 L 160 404 Z" fill="#FCA5A5" />
 
               {/* Side Mirrors */}
-              <path d="M 40 135 C 34 135, 34 150, 48 150 L 48 142 Z" fill="#475569" />
-              <path d="M 180 135 C 186 135, 186 150, 172 150 L 172 142 Z" fill="#475569" />
+              <path d="M 40 135 C 34 135, 34 150, 48 150 L 48 142 Z" fill="#64748B" />
+              <path d="M 180 135 C 186 135, 186 150, 172 150 L 172 142 Z" fill="#64748B" />
 
-              {/* Dark Side Wheels & Hubcaps */}
-              <g fill="#334155">
+              {/* Side Wheels */}
+              <g fill="#475569">
                 <rect x="24" y="80" width="18" height="48" rx="6" />
                 <circle cx="42" cy="104" r="5" fill="#94A3B8" />
                 
@@ -276,35 +293,36 @@ export default function CarMapResults({
                 <circle cx="178" cy="334" r="5" fill="#94A3B8" />
               </g>
 
-              {/* Dash Cutlines for Bonnet & Boot */}
+              {/* Cutlines */}
               <path d="M 70 70 Q 110 58 150 70" stroke="#CBD5E1" strokeWidth="1.5" strokeDasharray="3 2" fill="none" />
               <path d="M 70 365 Q 110 375 150 365" stroke="#CBD5E1" strokeWidth="1.5" strokeDasharray="3 2" fill="none" />
 
-              {/* Dynamic SVG Pin Markers directly anchored to resolved vector coordinates */}
+              {/* Dynamic Pin Markers */}
               {placedPins.map(({ item, idx, cx, cy }) => {
                 const isLocked = idx >= 3;
-                const pinColor = item.severity === 'Severe' ? '#DC2626' : item.severity === 'Moderate' ? '#DC2626' : '#D97706';
+                const pinColor = item.severity === 'Severe' ? '#DC2626' : item.severity === 'Moderate' ? '#E11D48' : '#D97706';
 
                 return (
                   <g 
-                    key={item.finding_id || idx}
-                    role="button" tabIndex={0} 
-                    aria-label={isLocked ? `Damage point ${idx + 1}: Locked (Unlock Full Report)` : `View damage photo ${idx + 1}: ${getSanitizedVehiclePart(item)}`}
+                    key={item.finding_id || idx} 
+                    role="button" 
+                    tabIndex={0} 
+                    aria-label={isLocked ? `Damage point ${idx + 1}: Locked` : `View damage photo ${idx + 1}: ${getSanitizedVehiclePart(item)}`}
                     onKeyDown={(event) => { 
                       if (event.key === 'Enter' || event.key === ' ') { 
                         event.preventDefault(); 
                         if (isLocked) {
-                          toast.info(`Damage #${idx + 1} (${getSanitizedVehiclePart(item)}) is locked. Unlock the full report to view photo.`);
+                          toast.info(`Damage #${idx + 1} (${getSanitizedVehiclePart(item)}) is locked. Unlock full report to inspect.`);
                           setCurrentStep('paywall');
                         } else {
                           setActiveBoxModal({ item }); 
                         }
                       } 
                     }}
-                    className="cursor-pointer hover:opacity-90 active:opacity-80 select-none"
+                    className="cursor-pointer hover:opacity-90 active:scale-95 transition-all select-none"
                     onClick={() => {
                       if (isLocked) {
-                        toast.info(`Damage #${idx + 1} (${getSanitizedVehiclePart(item)}) is locked. Unlock the full report to view photo.`);
+                        toast.info(`Damage #${idx + 1} (${getSanitizedVehiclePart(item)}) is locked. Unlock full report to inspect.`);
                         setCurrentStep('paywall');
                       } else {
                         setActiveBoxModal({ item });
@@ -318,7 +336,7 @@ export default function CarMapResults({
                       fill={pinColor} 
                       stroke="#FFFFFF" 
                       strokeWidth="2.5" 
-                      className="drop-shadow-md"
+                      className="shadow-sm"
                     />
                     <text 
                       x={cx} 
@@ -326,7 +344,7 @@ export default function CarMapResults({
                       dy="4" 
                       fill="#FFFFFF" 
                       fontSize="12" 
-                      fontWeight="900" 
+                      fontWeight="bold" 
                       textAnchor="middle" 
                       fontFamily="sans-serif"
                     >
@@ -338,57 +356,60 @@ export default function CarMapResults({
             </svg>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 mt-5 text-xs font-semibold text-slate-600">
-            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-[#D97706] inline-block"></span> Minor</span>
-            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-[#DC2626] inline-block"></span> Moderate</span>
-            <span className="text-slate-300">|</span>
-            <span className="font-bold text-slate-900">{vehicleData?.makeModel || 'Vehicle'} • {vehicleData?.plateNumber || 'ID-123'}</span>
+          {/* Blueprint Legend */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mt-4 text-xs font-medium text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Minor</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> Moderate</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-600 inline-block"></span> Severe</span>
+            </div>
+            <span className="font-bold text-slate-800">{vehicleData?.makeModel || 'Vehicle'} • {vehicleData?.plateNumber || 'ID-123'}</span>
           </div>
         </div>
 
-        {/* Right Column: Dynamic Findings or Clean Vehicle Certificate */}
+        {/* Right Column: Findings Cards or Clean Vehicle Certificate */}
         <div className="lg:col-span-7 flex flex-col gap-4">
           {findings.length === 0 ? (
-            /* Dedicated Zero Damage Screen (No Paywall Required) */
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-200 shadow-sm flex flex-col gap-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+            /* Dedicated Zero Damage Screen */
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-emerald-200 shadow-xs flex flex-col gap-5">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-200">
                   <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div>
-                  <span className="inline-flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> 100% Clean Vehicle · 0 Findings
+                  <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> 100% Clean · 0 Defects
                   </span>
-                  <h3 className="text-xl font-extrabold text-slate-900 mt-1">Vehicle Passed Visual Inspection</h3>
+                  <h3 className="text-xl font-bold text-slate-900 mt-1">Vehicle Passed Visual Inspection</h3>
                 </div>
               </div>
 
-              <p className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                Our Gemini AI Computer Vision model inspected all uploaded angles and verified that no physical scratches, dents, scuffs, cracks, or panel misalignments were detected.
+              <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-200">
+                All 14 uploaded angles were processed and verified. No physical scratches, dents, scuffs, panel misalignments, or cracks were identified.
               </p>
 
               <div>
-                <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 mb-2.5">
-                  Verified Undamaged Components
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">
+                  Verified Undamaged Component Zones
                 </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-bold text-slate-700">
-                  <span className="p-2.5 rounded-xl bg-emerald-50/60 border border-emerald-100 flex items-center gap-1.5 text-emerald-800">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Front Bumper
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-medium text-slate-700">
+                  <span className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> Front Bumper
                   </span>
-                  <span className="p-2.5 rounded-xl bg-emerald-50/60 border border-emerald-100 flex items-center gap-1.5 text-emerald-800">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Windshield & Hood
+                  <span className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> Windshield & Hood
                   </span>
-                  <span className="p-2.5 rounded-xl bg-emerald-50/60 border border-emerald-100 flex items-center gap-1.5 text-emerald-800">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Side Profile Doors
+                  <span className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> Side Profile Doors
                   </span>
-                  <span className="p-2.5 rounded-xl bg-emerald-50/60 border border-emerald-100 flex items-center gap-1.5 text-emerald-800">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Rear Bumper & Glass
+                  <span className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> Rear Bumper & Glass
                   </span>
-                  <span className="p-2.5 rounded-xl bg-emerald-50/60 border border-emerald-100 flex items-center gap-1.5 text-emerald-800">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Wheels & Rims
+                  <span className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> Wheels & Rims
                   </span>
-                  <span className="p-2.5 rounded-xl bg-emerald-50/60 border border-emerald-100 flex items-center gap-1.5 text-emerald-800">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Roof & Panels
+                  <span className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> Roof & Panels
                   </span>
                 </div>
               </div>
@@ -402,14 +423,14 @@ export default function CarMapResults({
                     window.open(`${API_BASE}/api/reports/${inspId}/pdf`, '_blank');
                     toast.success('Clean Inspection Certificate generated!');
                   }}
-                  className="w-full sm:flex-1 h-12 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-all"
+                  className="w-full sm:flex-1 h-12 bg-[#022a5b] hover:bg-[#033b7e] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-colors"
                 >
-                  <Download className="w-4 h-4 text-emerald-400" /> Download Clean PDF Certificate
+                  <Download className="w-4 h-4 text-white" /> Download Clean PDF Certificate
                 </button>
                 <button
                   type="button"
                   onClick={() => setCurrentStep('checklist')}
-                  className="w-full sm:w-auto h-12 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all"
+                  className="w-full sm:w-auto h-12 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors"
                 >
                   <RotateCcw className="w-4 h-4" /> Start New Scan
                 </button>
@@ -417,56 +438,70 @@ export default function CarMapResults({
             </div>
           ) : (
             <>
-              <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
-                Detected damage ({Math.min(3, findings.length)} of {findings.length} shown)
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Detected Damage Points ({Math.min(3, findings.length)} of {findings.length} shown)
               </h3>
 
               {findings.slice(0, 3).map((item, idx) => {
                 const displaySrc = getFindingEvidence(item, activePhotos).src;
+                const confidencePct = Math.round((item.confidence ?? 0.92) * 100);
 
                 return (
                   <div 
                     key={item.finding_id || idx} 
-                    className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs hover:border-slate-300 transition-all flex flex-col gap-3.5"
+                    className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs hover:border-slate-300 transition-all flex flex-col gap-3"
                   >
-                    {/* Top Section: Photo Thumbnail + Title & Info + (Severity Pill & Action Button) */}
+                    {/* Top Row */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="relative shrink-0 w-16 h-16 sm:w-18 sm:h-18 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-2xs">
-                          {displaySrc ? <img src={displaySrc} alt={item.vehicle_part} className="w-full h-full object-cover" /> : <span className="flex h-full items-center p-2 text-xs">Photo unavailable</span>}
-                          <span className="absolute top-1 left-1 w-5 h-5 rounded-full bg-slate-900 text-white font-black text-[10px] flex items-center justify-center shadow-xs">
-                            {idx + 1}
-                          </span>
+                      <div className="flex items-center gap-3 min-w-0">
+                        {/* Dedicated Clear High-Contrast Number Badge OUTSIDE the image */}
+                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#022a5b] to-[#04428e] text-white font-black text-xs sm:text-sm flex items-center justify-center shrink-0 shadow-xs ring-2 ring-[#022a5b]/15">
+                          {idx + 1}
                         </div>
-                        <div className="min-w-0 wrap-anywhere">
-                          <h4 className="font-extrabold text-base text-slate-900 capitalize leading-snug">{getSanitizedVehiclePart(item)}</h4>
-                          <p className="text-xs text-slate-500 font-medium mt-0.5 capitalize">
-                            {item.damage_type?.replace(/_/g, ' ')} • <span className="text-slate-800 font-bold">{Math.round((item.confidence ?? 0.92) * 100)}% confidence</span>
+
+                        {/* Clean unobstructed photo thumbnail */}
+                        <div className="relative shrink-0 w-14 h-14 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-2xs">
+                          {displaySrc ? (
+                            <img src={displaySrc} alt={item.vehicle_part} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="flex h-full items-center justify-center text-xs text-slate-400">Photo</span>
+                          )}
+                        </div>
+
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-sm text-slate-900 capitalize leading-snug">{getSanitizedVehiclePart(item)}</h4>
+                          <p className="text-xs text-slate-500 capitalize mt-0.5">
+                            {item.damage_type?.replace(/_/g, ' ')} • <span className="font-semibold text-[#022a5b]">{confidencePct}% confidence</span>
                           </p>
                         </div>
                       </div>
 
-                      {/* Right Column: Severity Badge & View Photo Button */}
+                      {/* Right Column: Severity & View Photo */}
                       <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 shrink-0">
-                        <span className={`px-3 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase shrink-0 ${
-                          item.severity === 'Severe' ? 'bg-red-100 text-red-700 border border-red-200' : item.severity === 'Moderate' ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-amber-100 text-amber-800 border border-amber-200'
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          item.severity === 'Severe' 
+                            ? 'bg-red-100 text-red-800 border border-red-200' 
+                            : item.severity === 'Moderate' 
+                            ? 'bg-rose-100 text-rose-800 border border-rose-200' 
+                            : 'bg-amber-100 text-amber-800 border border-amber-200'
                         }`}>
-                          {(item.severity || 'Minor').toUpperCase()}
+                          {item.severity || 'Minor'}
                         </span>
 
-                        <button type="button"
-                          className="inline-flex items-center gap-1.5 text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 hover:text-sky-800 px-3 py-1.5 rounded-xl border border-sky-200 cursor-pointer transition-all active:scale-95 whitespace-nowrap" 
+                        <button 
+                          type="button"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-[#022a5b] bg-[#022a5b]/5 hover:bg-[#022a5b]/10 px-3 py-1.5 rounded-lg border border-[#022a5b]/15 cursor-pointer transition-colors" 
                           onClick={() => setActiveBoxModal({ item })}
                         >
-                          <Eye className="w-3.5 h-3.5 text-sky-600" />
+                          <Eye className="w-3.5 h-3.5 text-[#022a5b]" />
                           <span>View Photo</span>
                         </button>
                       </div>
                     </div>
 
-                    {/* Bottom Section: AI Damage Description */}
+                    {/* Description */}
                     {item.description && (
-                      <p className="text-xs text-slate-600 leading-relaxed bg-slate-50/80 p-3 rounded-2xl border border-slate-100/90">
+                      <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
                         {item.description}
                       </p>
                     )}
@@ -474,21 +509,36 @@ export default function CarMapResults({
                 );
               })}
 
-              {/* Paywall CTA Card (Only shown when damage findings exist) */}
-              <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-xl flex flex-col gap-4 mt-2 border border-slate-800">
-                <span className="bg-sky-500/20 text-sky-300 text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full w-fit border border-sky-400/30">
-                  FULL PDF REPORT
-                </span>
+              {/* Clean #022a5b Paywall CTA Card */}
+              <div className="bg-gradient-to-br from-[#022a5b]/8 via-white to-[#022a5b]/12 text-slate-900 rounded-3xl p-6 sm:p-7 shadow-xs flex flex-col gap-4 border border-[#022a5b]/20 relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-4 h-1 bg-[#022a5b] rounded-full inline-block"></span>
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#022a5b]">
+                      Official PDF Certificate
+                    </span>
+                  </div>
+                  <span className="text-xs font-bold text-slate-600 bg-white px-2.5 py-0.5 rounded-full border border-slate-200 shadow-2xs">
+                    One-Time Unlock
+                  </span>
+                </div>
+
                 <div>
-                  <h3 className="text-xl font-extrabold text-white tracking-tight">Unlock your complete inspection report</h3>
-                  <p className="text-slate-300 text-xs mt-1">All {findings.length} findings, AI descriptions, normalized bounding box coordinates, and official PDF certificate.</p>
+                  <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">
+                    Unlock Complete Vehicle Inspection <span className="text-[#022a5b]">Report</span>
+                  </h3>
+                  <p className="text-slate-600 text-xs sm:text-sm mt-1 leading-relaxed">
+                    Gain full access to all {findings.length} findings, high-resolution bounding boxes, damage descriptions, and official cryptographic PDF certificate.
+                  </p>
                 </div>
 
                 <button 
                   onClick={() => setCurrentStep('paywall')}
-                  className="w-full h-13 bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold text-xs rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
+                  className="w-full h-13 bg-gradient-to-r from-[#022a5b] via-[#033c80] to-[#022a5b] hover:from-[#033c80] hover:to-[#022a5b] text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2.5 shadow-md shadow-[#022a5b]/20 transition-all cursor-pointer active:scale-98"
                 >
-                  <Lock className="w-4 h-4 text-slate-950" /> Unlock Full Report for $3 <ArrowRight className="w-4 h-4" />
+                  <Lock className="w-4 h-4 text-white" />
+                  <span>Unlock Full Report for $3.00</span>
+                  <ArrowRight className="w-4 h-4 text-white" />
                 </button>
               </div>
             </>

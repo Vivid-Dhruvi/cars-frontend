@@ -8,10 +8,18 @@ import CarMapResults from '@/components/CarMapResults';
 import PaywallForm from '@/components/PaywallForm';
 import UnlockedReport from '@/components/UnlockedReport';
 import InspectionLoader from '@/components/InspectionLoader';
+import { Camera, Cpu, Lock, FileCheck, Check } from 'lucide-react';
+
+const STEPS = [
+  { id: 'checklist', label: '1. Photo Capture', icon: Camera, stepNum: '1' },
+  { id: 'results', label: '2. AI Analysis', icon: Cpu, stepNum: '2' },
+  { id: 'paywall', label: '3. Unlock Report', icon: Lock, stepNum: '3' },
+  { id: 'unlocked', label: '4. Official Certificate', icon: FileCheck, stepNum: '4' },
+];
 
 export default function App() {
   const [isMounted, setIsMounted] = useState(false);
-  const [currentStep, setCurrentStepState] = useState('checklist'); // checklist, results, paywall, unlocked
+  const [currentStep, setCurrentStepState] = useState('checklist');
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const paymentProcessedRef = useRef(false);
   
@@ -28,7 +36,7 @@ export default function App() {
     }
   }, []);
 
-  // Vehicle Details State (Inputted dynamically by user or contract)
+  // Vehicle Details State
   const [vehicleData, setVehicleData] = useState({
     company: '',
     makeModel: '',
@@ -115,7 +123,7 @@ export default function App() {
         }
         setIsVerifyingPayment(false);
         setCurrentStepState('unlocked');
-        toast.success('iCredit Payment Verified! Full Report Unlocked & PDF Emailed.', { id: 'payment-verified-toast' });
+        toast.success('Payment Verified! Full Report Unlocked & PDF Dispatched.', { id: 'payment-verified-toast' });
       })
       .catch(err => {
         console.error('Failed loading paid inspection:', err);
@@ -125,7 +133,7 @@ export default function App() {
     } else if (paymentStatus === 'failed' || (statusParam && statusParam !== '0')) {
       if (paymentProcessedRef.current) return;
       paymentProcessedRef.current = true;
-      toast.error('iCredit payment was cancelled or not completed. Please try again.', { id: 'payment-failed-toast' });
+      toast.error('Payment was cancelled or not completed. Please try again.', { id: 'payment-failed-toast' });
       try {
         localStorage.setItem('carsinsure_step', 'paywall');
       } catch (e) {}
@@ -153,7 +161,6 @@ export default function App() {
           if (savedPhotosRaw) setPhotos(JSON.parse(savedPhotosRaw));
           if (savedVehicleRaw) setVehicleData(JSON.parse(savedVehicleRaw));
 
-          // If step was marked unlocked, double check backend record to ensure it is actually paid
           if (savedStep === 'unlocked' && savedActiveId) {
             const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
             fetch(`${API_BASE}/api/reports/${savedActiveId}`)
@@ -163,7 +170,6 @@ export default function App() {
                   setCurrentStepState('unlocked');
                   window.history.replaceState({ step: 'unlocked' }, '', window.location.pathname);
                 } else {
-                  // Not paid: enforce results view
                   setCurrentStepState('results');
                   try {
                     localStorage.setItem('carsinsure_step', 'results');
@@ -202,14 +208,14 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Helper to compress high-res phone camera photos so Vercel 4.5MB payload limit is never exceeded
+  // Helper to compress high-res phone camera photos
   const compressImage = (file) => {
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
-          const maxDim = 720; // Optimal 720p resolution for lightning-fast encoding & Gemini Vision
+          const maxDim = 720;
           let width = img.width;
           let height = img.height;
 
@@ -237,7 +243,7 @@ export default function App() {
     });
   };
 
-  // Instant local photo selection & Base64 encoder (No AI prompt runs until full batch submission)
+  // Instant local photo selection & Base64 encoder
   const handleFileUpload = async (id, file) => {
     if (!file) return;
 
@@ -247,7 +253,7 @@ export default function App() {
         ...prev, 
         [id]: { url: base64Data, filename: `IMAGE_${id}` } 
       }));
-      toast.success(`IMAGE_${id} captured!`);
+      toast.success(`Photo ${id} captured!`);
     } catch (err) {
       console.error('Compress Error:', err);
       toast.error('Failed to process photo.');
@@ -262,7 +268,7 @@ export default function App() {
       return;
     }
     setIsUploading(true);
-    toast.info('Gemini AI Engine analyzing vehicle photos...');
+    toast.info('Analyzing vehicle photos with AI engine...');
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     try {
       const res = await fetch(`${API_BASE}/api/inspection/analyze`, {
@@ -286,7 +292,7 @@ export default function App() {
           localStorage.removeItem('carsinsure_pending_inspection_id');
         } catch (e) {}
         setCurrentStep('results');
-        toast.success('Gemini Vision AI Analysis Complete!');
+        toast.success('AI Visual Analysis Complete!');
       } else {
         toast.error('Analysis error: ' + (data.error || 'Server error occurred'));
       }
@@ -299,14 +305,61 @@ export default function App() {
   };
 
   const capturedCount = Object.values(photos).filter(Boolean).length;
+  const currentStepIndex = STEPS.findIndex(s => s.id === currentStep);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased flex flex-col items-center justify-start pb-12">
+    <div className="min-h-screen bg-[#F1F5F9] text-slate-900 font-sans antialiased flex flex-col items-center justify-start pb-16">
       {/* Top Header */}
       <Header setCurrentStep={setCurrentStep} currentStep={currentStep} />
 
+      {/* Stepper Navigation Bar (#022a5b royal midnight gradient) */}
+      <div className="w-full max-w-6xl px-4 sm:px-8 pt-6 pb-2">
+        <div className="bg-white rounded-2xl p-2 sm:p-2.5 border border-slate-200/90 shadow-xs flex items-center justify-between gap-1 sm:gap-2">
+          {STEPS.map((step, idx) => {
+            const Icon = step.icon;
+            const isPassed = currentStepIndex > idx;
+            const isCurrent = currentStepIndex === idx;
+
+            return (
+              <React.Fragment key={step.id}>
+                <div 
+                  className={`flex-1 flex items-center justify-center sm:justify-start gap-2.5 py-2 px-3 sm:px-4 rounded-xl transition-all ${
+                    isCurrent 
+                      ? 'bg-gradient-to-r from-[#022a5b] to-[#04428e] text-white font-extrabold shadow-md shadow-[#022a5b]/20' 
+                      : isPassed 
+                        ? 'text-[#022a5b] bg-[#022a5b]/10 font-bold' 
+                        : 'text-slate-400 bg-transparent opacity-70'
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                    isCurrent 
+                      ? 'bg-white text-[#022a5b]' 
+                      : isPassed 
+                        ? 'bg-[#022a5b] text-white' 
+                        : 'bg-slate-200 text-slate-500'
+                  }`}>
+                    {isPassed ? <Check className="w-3 h-3 stroke-[3]" /> : step.stepNum}
+                  </div>
+                  <span className={`text-xs truncate hidden sm:inline ${
+                    isCurrent ? 'text-white font-bold' : isPassed ? 'text-[#022a5b] font-semibold' : 'text-slate-500 font-medium'
+                  }`}>
+                    {step.label}
+                  </span>
+                </div>
+
+                {idx < STEPS.length - 1 && (
+                  <div className={`w-3 sm:w-6 h-0.5 rounded-full shrink-0 transition-all ${
+                    currentStepIndex > idx ? 'bg-[#022a5b]' : 'bg-slate-200'
+                  }`} />
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Main Content Area */}
-      <main className="w-full max-w-6xl px-4 md:px-8 pt-6">
+      <main className="w-full max-w-6xl px-4 sm:px-8 pt-4">
         
         {/* PAYMENT VERIFICATION IN-FLIGHT LOADER */}
         {isVerifyingPayment && (

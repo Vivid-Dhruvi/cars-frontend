@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle2, Download, Scan, ShieldCheck, Eye, RotateCcw } from 'lucide-react';
+import { CheckCircle2, Download, Scan, ShieldCheck, RotateCcw, Car, Key } from 'lucide-react';
 import { toast } from 'sonner';
 
 import DamagePhotoDialog from './DamagePhotoDialog';
@@ -48,7 +48,7 @@ const getSanitizedVehiclePart = (item) => {
 
 // Helper function to resolve dynamic non-overlapping 2D car map coordinates for all findings
 function getResolvedCarPins(findings) {
-  const MIN_PIN_DISTANCE = 30; // Minimum center-to-center distance for 13px radius circles
+  const MIN_PIN_DISTANCE = 32;
   const placedPins = [];
 
   findings.forEach((item, idx) => {
@@ -138,7 +138,6 @@ function getResolvedCarPins(findings) {
       else { cx = 110; cy = 220; }
     }
 
-    // Dynamic collision resolution loop to ensure zero overlap between any pins
     let attempts = 0;
     let isColliding = true;
     while (isColliding && attempts < 20) {
@@ -163,7 +162,6 @@ function getResolvedCarPins(findings) {
       attempts++;
     }
 
-    // Keep pin comfortably inside SVG viewbox bounds
     cx = Math.max(36, Math.min(184, cx));
     cy = Math.max(38, Math.min(402, cy));
 
@@ -200,7 +198,7 @@ export default function UnlockedReport({
   const displayEmail = userInfo?.email || analysisResults?.user_info?.email || (typeof window !== 'undefined' ? localStorage.getItem('carsinsure_user_email') : '') || 'your email';
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       {activeBoxModal && (
         <DamagePhotoDialog 
           item={activeBoxModal.item} 
@@ -210,62 +208,82 @@ export default function UnlockedReport({
         />
       )}
 
-      {/* Payment Success Banner */}
-      <div className="bg-gradient-to-r from-emerald-900 via-slate-900 to-slate-900 text-white rounded-3xl p-5 sm:p-6 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 shadow-lg border border-emerald-500/30">
-        <div className="flex min-w-0 flex-1 flex-col sm:flex-row sm:items-center gap-4">
-          <div className="w-13 h-13 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-400 flex items-center justify-center shrink-0">
-            <CheckCircle2 className="w-8 h-8" />
+      {/* Payment Success Banner (Refined Proportionate Executive Card) */}
+      <div className="bg-gradient-to-r from-[#022a5b]/6 via-white to-emerald-50/50 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs border border-[#022a5b]/15 relative overflow-hidden">
+        {/* Subtle Top Accent Bar */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#022a5b] via-[#04428e] via-sky-500 to-emerald-500" />
+
+        <div className="flex min-w-0 flex-1 items-center gap-3.5 relative z-10">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0 shadow-2xs">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
           </div>
-          <div className="min-w-0 wrap-anywhere">
-            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-bold uppercase tracking-wider mb-1 border border-emerald-400/30">
-              ✓ Payment Verified • $3.00
+          <div className="min-w-0 space-y-0.5">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[10px] font-bold uppercase tracking-wider border border-emerald-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+              <span>Payment Verified • Full Report Unlocked</span>
             </div>
-            <h2 className="font-black text-white text-xl tracking-tight">Full Inspection Unlocked!</h2>
-            <p className="text-xs text-slate-300 mt-0.5">
-              Official PDF certificate emailed to <span className="font-bold text-white underline">{displayEmail}</span>
+            
+            {/* Refined Proportional Gradient Title */}
+            <h2 className="font-bold text-base sm:text-lg tracking-tight leading-tight">
+              <span className="bg-gradient-to-r from-[#022a5b] via-[#04428e] to-[#0a66c2] bg-clip-text text-transparent">
+                Official Inspection Certificate
+              </span>{' '}
+              <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 bg-clip-text text-transparent">
+                Ready
+              </span>
+            </h2>
+
+            <p className="text-[11px] text-slate-500">
+              Signed PDF certificate emailed to <span className="font-bold text-slate-800 underline decoration-slate-300">{displayEmail}</span>
             </p>
           </div>
         </div>
 
         <button 
           onClick={downloadPdf}
-          className="w-full lg:w-auto px-5 min-h-12 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer shrink-0 active:scale-98"
+          className="w-full sm:w-auto px-4 h-10 bg-gradient-to-r from-[#022a5b] via-[#033c80] to-[#022a5b] hover:from-[#033c80] hover:to-[#044a9e] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer shrink-0 active:scale-98 relative z-10"
         >
-          <Download className="w-4 h-4 text-slate-950" /> Download PDF Certificate
+          <Download className="w-3.5 h-3.5 text-white" />
+          <span>Download PDF Certificate</span>
         </button>
       </div>
 
       {/* 2-Column Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         
         {/* Left Column: Interactive 2D Top-Down Car Blueprint Model */}
-        <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-slate-200 shadow-sm text-center lg:sticky lg:top-24">
+        <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-slate-200 shadow-xs text-center lg:sticky lg:top-24">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="font-extrabold text-xl text-slate-900">Vehicle Blueprint</h3>
-            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+            <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+              <Car className="w-4 h-4 text-slate-700" />
+              <span>Full Vehicle Blueprint</span>
+            </h3>
+            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
               All Pins Unlocked
             </span>
           </div>
-          <p className="text-xs text-slate-500 mb-5 text-left">Click any number marker to view the photo and AI detection overlay.</p>
+          <p className="text-xs text-slate-500 mb-4 text-left">
+            Select any damage pin to inspect full resolution photos and box coordinates.
+          </p>
 
-          <div className="w-full h-96 bg-[#F1F5F9]/70 rounded-3xl border border-slate-200/80 relative flex items-center justify-center overflow-hidden p-6">
-            <svg className="h-full w-auto drop-shadow-xs" viewBox="0 0 220 440" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <div className="w-full h-96 bg-slate-50 rounded-2xl border border-slate-200 relative flex items-center justify-center overflow-hidden p-4">
+            <svg className="h-full w-auto" viewBox="0 0 220 440" fill="none" xmlns="http://www.w3.org/2000/svg">
               {/* Outer Vehicle Body Shell */}
               <path 
                 d="M 60 45 C 60 25, 160 25, 160 45 L 170 120 C 180 160, 180 270, 170 320 L 160 395 C 160 415, 60 415, 60 395 L 50 320 C 40 270, 40 160, 50 120 Z" 
-                fill="#EEF2F6" 
+                fill="#E2E8F0" 
                 stroke="#94A3B8" 
-                strokeWidth="2.5" 
+                strokeWidth="2" 
               />
 
               {/* Inner Roof / Cabin Outlines */}
-              <rect x="62" y="180" width="96" height="110" rx="16" fill="none" stroke="#CBD5E1" strokeWidth="2" />
+              <rect x="62" y="180" width="96" height="110" rx="16" fill="#F1F5F9" stroke="#CBD5E1" strokeWidth="1.5" />
               
-              {/* Front Windshield (Light Soft Blue Glass) */}
-              <path d="M 62 135 C 75 125, 145 125, 158 135 C 152 165, 68 165, 62 135 Z" fill="#DCEAFE" stroke="#93C5FD" strokeWidth="1.5" />
+              {/* Front Windshield (Soft Blue Glass) */}
+              <path d="M 62 135 C 75 125, 145 125, 158 135 C 152 165, 68 165, 62 135 Z" fill="#BFDBFE" stroke="#93C5FD" strokeWidth="1.5" />
 
-              {/* Rear Glass (Light Soft Blue Glass) */}
-              <path d="M 64 300 C 75 290, 145 290, 156 300 C 150 330, 70 330, 64 300 Z" fill="#DCEAFE" stroke="#93C5FD" strokeWidth="1.5" />
+              {/* Rear Glass (Soft Blue Glass) */}
+              <path d="M 64 300 C 75 290, 145 290, 156 300 C 150 330, 70 330, 64 300 Z" fill="#BFDBFE" stroke="#93C5FD" strokeWidth="1.5" />
 
               {/* Headlights (Soft Yellow) */}
               <path d="M 58 35 C 70 32, 90 32, 92 40 L 54 44 Z" fill="#FDE68A" />
@@ -276,11 +294,11 @@ export default function UnlockedReport({
               <path d="M 160 398 L 132 398 L 135 405 L 160 404 Z" fill="#FCA5A5" />
 
               {/* Side Mirrors */}
-              <path d="M 40 135 C 34 135, 34 150, 48 150 L 48 142 Z" fill="#475569" />
-              <path d="M 180 135 C 186 135, 186 150, 172 150 L 172 142 Z" fill="#475569" />
+              <path d="M 40 135 C 34 135, 34 150, 48 150 L 48 142 Z" fill="#64748B" />
+              <path d="M 180 135 C 186 135, 186 150, 172 150 L 172 142 Z" fill="#64748B" />
 
               {/* Dark Side Wheels & Hubcaps */}
-              <g fill="#334155">
+              <g fill="#475569">
                 <rect x="24" y="80" width="18" height="48" rx="6" />
                 <circle cx="42" cy="104" r="5" fill="#94A3B8" />
                 
@@ -294,18 +312,18 @@ export default function UnlockedReport({
                 <circle cx="178" cy="334" r="5" fill="#94A3B8" />
               </g>
 
-              {/* Dash Cutlines for Bonnet & Boot */}
+              {/* Dash Cutlines */}
               <path d="M 70 70 Q 110 58 150 70" stroke="#CBD5E1" strokeWidth="1.5" strokeDasharray="3 2" fill="none" />
               <path d="M 70 365 Q 110 375 150 365" stroke="#CBD5E1" strokeWidth="1.5" strokeDasharray="3 2" fill="none" />
 
               {/* Dynamic SVG Pin Markers - ALL 100% UNLOCKED */}
               {placedPins.map(({ item, idx, cx, cy }) => {
                 const isHovered = hoveredIdx === idx;
-                const pinColor = item.severity === 'Severe' ? '#DC2626' : item.severity === 'Moderate' ? '#DC2626' : '#D97706';
+                const pinColor = item.severity === 'Severe' ? '#DC2626' : item.severity === 'Moderate' ? '#E11D48' : '#D97706';
 
                 return (
                   <g 
-                    key={item.finding_id || idx}
+                    key={item.finding_id || idx} 
                     role="button" 
                     tabIndex={0} 
                     aria-label={`View damage photo ${idx + 1}: ${getSanitizedVehiclePart(item)}`}
@@ -317,7 +335,7 @@ export default function UnlockedReport({
                         setActiveBoxModal({ item }); 
                       } 
                     }}
-                    className="cursor-pointer select-none transition-transform"
+                    className="cursor-pointer select-none transition-transform active:scale-95"
                     onClick={() => setActiveBoxModal({ item })}
                   >
                     <circle 
@@ -327,7 +345,7 @@ export default function UnlockedReport({
                       fill={pinColor} 
                       stroke="#FFFFFF" 
                       strokeWidth={isHovered ? "3" : "2.5"} 
-                      className="drop-shadow-md transition-all"
+                      className="drop-shadow-sm transition-all"
                     />
                     <text 
                       x={cx} 
@@ -335,7 +353,7 @@ export default function UnlockedReport({
                       dy="4" 
                       fill="#FFFFFF" 
                       fontSize={isHovered ? "13" : "12"} 
-                      fontWeight="900" 
+                      fontWeight="bold" 
                       textAnchor="middle" 
                       fontFamily="sans-serif"
                     >
@@ -347,11 +365,13 @@ export default function UnlockedReport({
             </svg>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 mt-5 text-xs font-semibold text-slate-600">
-            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-[#D97706] inline-block"></span> Minor</span>
-            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-[#DC2626] inline-block"></span> Moderate</span>
-            <span className="text-slate-300">|</span>
-            <span className="font-bold text-slate-900">{vehicleData?.makeModel || 'Vehicle'} • {vehicleData?.plateNumber || 'ID-123'}</span>
+          <div className="flex flex-wrap items-center justify-between gap-3 mt-4 text-xs font-medium text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Minor</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> Moderate</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-600 inline-block"></span> Severe</span>
+            </div>
+            <span className="font-bold text-slate-800">{vehicleData?.makeModel || 'Vehicle'} • {vehicleData?.plateNumber || 'ID-123'}</span>
           </div>
         </div>
 
@@ -359,69 +379,87 @@ export default function UnlockedReport({
         <div className="lg:col-span-7 flex flex-col gap-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h3 className="text-base font-extrabold text-slate-900 uppercase tracking-wider">
-                All {findings.length} Detected Damage Findings
+              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                All {findings.length} Unlocked Damage Findings
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">Complete AI analysis with bounding box overlays and severity levels.</p>
+              <p className="text-xs text-slate-500 mt-0.5">Complete AI analysis with bounding box overlays and descriptions.</p>
             </div>
-            <span className="text-xs font-bold bg-emerald-50 text-emerald-800 px-3 py-1 rounded-full border border-emerald-200 shrink-0">
+            <span className="text-xs font-semibold bg-emerald-50 text-emerald-800 px-3 py-1 rounded-full border border-emerald-200 shrink-0">
               {findings.length} of {findings.length} Unlocked
             </span>
           </div>
 
-          {findings.length === 0 && <p className="rounded-2xl bg-white p-6 text-sm text-slate-600 border border-slate-200">No damage findings were returned for this inspection.</p>}
+          {findings.length === 0 && (
+            <p className="rounded-2xl bg-white p-6 text-sm text-slate-600 border border-slate-200">
+              No damage findings were returned for this inspection.
+            </p>
+          )}
           
           {findings.map((item, idx) => {
             const displaySrc = getFindingEvidence(item, activePhotos).src;
             const isHovered = hoveredIdx === idx;
+            const confidencePct = Math.round((item.confidence ?? 0.92) * 100);
 
             return (
               <div 
                 key={item.finding_id || idx} 
                 onMouseEnter={() => setHoveredIdx(idx)}
                 onMouseLeave={() => setHoveredIdx(null)}
-                className={`bg-white rounded-3xl p-4 sm:p-5 border transition-all flex flex-col gap-3.5 ${
-                  isHovered ? 'border-sky-400 shadow-md ring-2 ring-sky-100' : 'border-slate-200 shadow-xs hover:border-slate-300'
+                className={`bg-white rounded-2xl p-4 sm:p-5 border transition-all flex flex-col gap-3 ${
+                  isHovered ? 'border-[#022a5b]/40 shadow-xs ring-1 ring-[#022a5b]/10' : 'border-slate-200 shadow-xs hover:border-slate-300'
                 }`}
               >
-                {/* Top Section: Photo Thumbnail + Title & Info + (Severity Pill & Action Button) */}
+                {/* Top Section */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="relative shrink-0 w-16 h-16 sm:w-18 sm:h-18 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-2xs">
-                      {displaySrc ? <img src={displaySrc} alt={item.vehicle_part} className="w-full h-full object-cover" /> : <span className="flex h-full items-center p-2 text-xs">Photo unavailable</span>}
-                      <span className="absolute top-1 left-1 w-5 h-5 rounded-full bg-slate-900 text-white font-black text-[10px] flex items-center justify-center shadow-xs">
-                        {idx + 1}
-                      </span>
+                    {/* Dedicated Clear High-Contrast Number Badge OUTSIDE the image */}
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#022a5b] to-[#04428e] text-white font-black text-xs sm:text-sm flex items-center justify-center shrink-0 shadow-xs ring-2 ring-[#022a5b]/15">
+                      {idx + 1}
                     </div>
-                    <div className="min-w-0 wrap-anywhere">
-                      <h4 className="font-extrabold text-base text-slate-900 capitalize leading-snug">{getSanitizedVehiclePart(item)}</h4>
-                      <p className="text-xs text-slate-500 font-medium mt-0.5 capitalize">
-                        {item.damage_type?.replace(/_/g, ' ')} • <span className="text-slate-800 font-bold">{Math.round((item.confidence ?? 0.92) * 100)}% confidence</span>
+
+                    {/* Clean unobstructed photo thumbnail */}
+                    <div className="relative shrink-0 w-14 h-14 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-2xs">
+                      {displaySrc ? (
+                        <img src={displaySrc} alt={item.vehicle_part} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="flex h-full items-center justify-center text-xs text-slate-400">Photo</span>
+                      )}
+                    </div>
+
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-sm text-slate-900 capitalize leading-snug">{getSanitizedVehiclePart(item)}</h4>
+                      <p className="text-xs text-slate-500 capitalize mt-0.5">
+                        {item.damage_type?.replace(/_/g, ' ')} • <span className="font-semibold text-[#022a5b]">{confidencePct}% confidence</span>
                       </p>
                     </div>
                   </div>
 
-                  {/* Right Column: Severity Badge & View Bounding Box Button */}
+                  {/* Right Column */}
                   <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 shrink-0">
-                    <span className={`px-3 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase shrink-0 ${
-                      item.severity === 'Severe' ? 'bg-red-100 text-red-700 border border-red-200' : item.severity === 'Moderate' ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-amber-100 text-amber-800 border border-amber-200'
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                      item.severity === 'Severe' 
+                        ? 'bg-red-100 text-red-800 border border-red-200' 
+                        : item.severity === 'Moderate' 
+                        ? 'bg-rose-100 text-rose-800 border border-rose-200' 
+                        : 'bg-amber-100 text-amber-800 border border-amber-200'
                     }`}>
-                      {(item.severity || 'Minor').toUpperCase()}
+                      {item.severity || 'Minor'}
                     </span>
 
-                    <button type="button"
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 hover:text-sky-800 px-3 py-1.5 rounded-xl border border-sky-200 cursor-pointer transition-all active:scale-95 whitespace-nowrap" 
+                    <button 
+                      type="button"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#022a5b] bg-[#022a5b]/5 hover:bg-[#022a5b]/10 px-3 py-1.5 rounded-lg border border-[#022a5b]/15 cursor-pointer transition-colors" 
                       onClick={() => setActiveBoxModal({ item })}
                     >
-                      <Scan className="w-3.5 h-3.5 text-sky-600" />
-                      <span>View Bounding Box</span>
+                      <Scan className="w-3.5 h-3.5 text-[#022a5b]" />
+                      <span>Bounding Box</span>
                     </button>
                   </div>
                 </div>
 
-                {/* Bottom Section: AI Damage Description */}
+                {/* AI Damage Description */}
                 {item.description && (
-                  <p className="text-xs text-slate-600 leading-relaxed bg-slate-50/80 p-3 rounded-2xl border border-slate-100/90">
+                  <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
                     {item.description}
                   </p>
                 )}
@@ -430,11 +468,14 @@ export default function UnlockedReport({
           })}
 
           {/* Verification Audit Badge */}
-          <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500 mt-2">
-            <span className="min-w-0 wrap-anywhere font-medium">Digital Verification Hash: <code className="bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-700 font-mono">{analysisResults?.sha256_hash || 'sha256-verified-e8f9a201b49912c3'}</code></span>
-            <span className="text-emerald-600 font-bold flex items-center gap-1.5 shrink-0">
+          <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-600 mt-1">
+            <span className="min-w-0 wrap-anywhere font-medium flex items-center gap-2">
+              <Key className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span>Digital SHA-256 Hash: <code className="bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-800 font-mono text-[11px]">{analysisResults?.sha256_hash || 'sha256-verified-e8f9a201b49912c3'}</code></span>
+            </span>
+            <span className="text-emerald-700 font-bold flex items-center gap-1.5 shrink-0 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Cryptographically Signed</span>
+              <span>Signed Record</span>
             </span>
           </div>
 
@@ -443,9 +484,9 @@ export default function UnlockedReport({
             <button
               type="button"
               onClick={downloadPdf}
-              className="w-full sm:flex-1 h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-all active:scale-98"
+              className="w-full sm:flex-1 h-12 bg-gradient-to-r from-[#022a5b] via-[#033c80] to-[#022a5b] hover:from-[#033c80] hover:to-[#044a9e] text-white font-extrabold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-[#022a5b]/20 transition-all active:scale-98"
             >
-              <Download className="w-4 h-4" /> Download Official PDF Certificate
+              <Download className="w-4 h-4 text-white" /> Download Official PDF Certificate
             </button>
             <button
               type="button"
@@ -462,7 +503,7 @@ export default function UnlockedReport({
                 } catch (e) {}
                 window.location.href = '/';
               }}
-              className="w-full sm:w-auto h-12 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all"
+              className="w-full sm:w-auto h-12 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors"
             >
               <RotateCcw className="w-4 h-4" /> Start New Scan
             </button>

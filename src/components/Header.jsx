@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { ShieldCheck } from 'lucide-react';
 
 export default function Header({ setCurrentStep, currentStep }) {
   const handleLogoClick = () => {
@@ -18,17 +19,40 @@ export default function Header({ setCurrentStep, currentStep }) {
   };
 
   return (
-    <header className="w-full bg-white border-b border-slate-200 px-4 md:px-8 h-16 flex items-center justify-between gap-2 sticky top-0 z-40 shadow-xs">
-      <button type="button" aria-label="CarsInsure AI Home" className="flex min-h-11 items-center gap-2 cursor-pointer text-left" onClick={handleLogoClick}>
-        <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-lg shadow-sm">
+    <header className="w-full bg-white border-b border-slate-200/90 px-4 sm:px-8 h-16 flex items-center justify-between gap-4 sticky top-0 z-40 shadow-xs">
+      {/* Brand Logo */}
+      <button 
+        type="button" 
+        aria-label="CarsInsure AI Home" 
+        className="flex items-center gap-3 cursor-pointer text-left group" 
+        onClick={handleLogoClick}
+      >
+        <div className="w-9 h-9 rounded-xl bg-[#022a5b] text-white flex items-center justify-center font-bold text-base shadow-xs group-hover:bg-[#033b7e] transition-colors">
           C
         </div>
-        <span className="font-extrabold text-slate-900 text-lg sm:text-xl tracking-tight">CarsInsure AI</span>
+
+        <div className="flex flex-col">
+          <div className="flex items-center gap-1.5">
+            <span className="font-extrabold text-[#022a5b] text-lg tracking-tight leading-none">
+              CarsInsure<span className="text-[#033b7e]">.ai</span>
+            </span>
+          </div>
+          <span className="text-[11px] text-slate-500 font-medium">
+            Automotive AI Visual Inspection
+          </span>
+        </div>
       </button>
 
-      <div className="flex items-center gap-3">
-        <span className="text-[10px] sm:text-xs font-bold text-slate-700 bg-slate-100 px-2.5 sm:px-3.5 py-1.5 rounded-xl border border-slate-200">
-          <span className="hidden sm:inline">Zero-Friction </span>AI Inspection
+      {/* Right side live status & protocol badge */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#022a5b]/5 border border-[#022a5b]/15 text-[#022a5b] text-xs font-medium">
+          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span className="text-[#022a5b] font-semibold text-xs">AI Vision Ready</span>
+        </div>
+
+        <span className="text-xs font-semibold text-[#022a5b] bg-[#022a5b]/5 px-3.5 py-1.5 rounded-xl border border-[#022a5b]/15 flex items-center gap-1.5">
+          <ShieldCheck className="w-4 h-4 text-[#022a5b]" />
+          <span>Inspection Protocol</span>
         </span>
       </div>
     </header>
