@@ -7,9 +7,12 @@ import PhotoChecklist from '@/components/PhotoChecklist';
 import CarMapResults from '@/components/CarMapResults';
 import PaywallForm from '@/components/PaywallForm';
 import UnlockedReport from '@/components/UnlockedReport';
+import InspectionLoader from '@/components/InspectionLoader';
 
 export default function App() {
+  const [isMounted, setIsMounted] = useState(false);
   const [currentStep, setCurrentStepState] = useState('checklist'); // checklist, results, paywall, unlocked
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const paymentProcessedRef = useRef(false);
   
   // Navigation wrapper that updates state and keeps browser history in sync
@@ -50,6 +53,7 @@ export default function App() {
 
   // Restore state on refresh OR handle return redirect from iCredit Hosted Payment Gateway
   useEffect(() => {
+    setIsMounted(true);
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     const paymentStatus = params.get('payment');
@@ -65,6 +69,7 @@ export default function App() {
     if (isPaymentSuccess && savedInspectionId) {
       if (paymentProcessedRef.current) return;
       paymentProcessedRef.current = true;
+      setIsVerifyingPayment(true);
 
       // Clean query params immediately so subsequent re-renders don't re-trigger
       window.history.replaceState({ step: 'unlocked' }, document.title, window.location.pathname);
@@ -86,27 +91,35 @@ export default function App() {
         })
       })
       .then(r => r.json())
-      .then(() => fetch(`${API_BASE}/api/reports/${savedInspectionId}`))
-      .then(r => r.json())
-      .then(data => {
-        if (data.report) {
-          setAnalysisResults(data.report);
-          if (data.report.user_info?.email) {
+      .then(async (checkoutData) => {
+        let report = checkoutData.report;
+        if (!report) {
+          const reportRes = await fetch(`${API_BASE}/api/reports/${savedInspectionId}`);
+          const data = await reportRes.json();
+          report = data.report;
+        }
+
+        if (report) {
+          setAnalysisResults(report);
+          if (report.user_info?.email) {
             setUserInfo({
-              name: data.report.user_info.name || savedName,
-              email: data.report.user_info.email || savedEmail
+              name: report.user_info.name || savedName,
+              email: report.user_info.email || savedEmail
             });
           }
           try {
-            localStorage.setItem('carsinsure_analysis_results', JSON.stringify(data.report));
+            localStorage.setItem('carsinsure_analysis_results', JSON.stringify(report));
             localStorage.setItem('carsinsure_step', 'unlocked');
+            localStorage.setItem('carsinsure_active_inspection_id', savedInspectionId);
           } catch (e) {}
         }
+        setIsVerifyingPayment(false);
         setCurrentStepState('unlocked');
         toast.success('iCredit Payment Verified! Full Report Unlocked & PDF Emailed.', { id: 'payment-verified-toast' });
       })
       .catch(err => {
         console.error('Failed loading paid inspection:', err);
+        setIsVerifyingPayment(false);
         setCurrentStepState('unlocked');
       });
     } else if (paymentStatus === 'failed' || (statusParam && statusParam !== '0')) {
@@ -196,7 +209,7 @@ export default function App() {
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
-          const maxDim = 900; // Optimal resolution for fast encoding & Gemini Vision
+          const maxDim = 720; // Optimal 720p resolution for lightning-fast encoding & Gemini Vision
           let width = img.width;
           let height = img.height;
 
@@ -215,7 +228,7 @@ export default function App() {
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.65);
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.60);
           resolve(compressedBase64);
         };
         img.src = e.target.result;
@@ -275,11 +288,11 @@ export default function App() {
         setCurrentStep('results');
         toast.success('Gemini Vision AI Analysis Complete!');
       } else {
-        toast.error('Analysis error: ' + data.error);
+        toast.error('Analysis error: ' + (data.error || 'Server error occurred'));
       }
     } catch (err) {
       console.error('API Error:', err);
-      toast.error('Failed to communicate with backend server.');
+      toast.error('Failed to communicate with backend server. Check connection.');
     } finally {
       setIsUploading(false);
     }
@@ -295,8 +308,18 @@ export default function App() {
       {/* Main Content Area */}
       <main className="w-full max-w-6xl px-4 md:px-8 pt-6">
         
+        {/* PAYMENT VERIFICATION IN-FLIGHT LOADER */}
+        {isVerifyingPayment && (
+          <InspectionLoader type="payment_verification" vehicleData={vehicleData} />
+        )}
+
+        {/* AI INSPECTION IN-FLIGHT LOADER */}
+        {!isVerifyingPayment && isUploading && (
+          <InspectionLoader type="ai_inspection" vehicleData={vehicleData} />
+        )}
+
         {/* STEP 1: 14-PHOTO CAPTURE CHECKLIST */}
-        {currentStep === 'checklist' && (
+        {!isVerifyingPayment && !isUploading && currentStep === 'checklist' && (
           <PhotoChecklist 
             vehicleData={vehicleData}
             setVehicleData={setVehicleData}
@@ -309,7 +332,7 @@ export default function App() {
         )}
 
         {/* STEP 2: AI RESULTS & 2D CAR MAP */}
-        {currentStep === 'results' && (
+        {!isVerifyingPayment && !isUploading && currentStep === 'results' && (
           <CarMapResults 
             vehicleData={vehicleData}
             analysisResults={analysisResults}
@@ -319,7 +342,7 @@ export default function App() {
         )}
 
         {/* STEP 3: PAYWALL FORM */}
-        {currentStep === 'paywall' && (
+        {!isVerifyingPayment && !isUploading && currentStep === 'paywall' && (
           <PaywallForm 
             userInfo={userInfo}
             setUserInfo={setUserInfo}
@@ -331,7 +354,7 @@ export default function App() {
         )}
 
         {/* STEP 4: UNLOCKED REPORT */}
-        {currentStep === 'unlocked' && (
+        {!isVerifyingPayment && !isUploading && currentStep === 'unlocked' && (
           <UnlockedReport 
             vehicleData={vehicleData}
             userInfo={userInfo}
