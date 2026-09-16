@@ -178,7 +178,18 @@ export default function UnlockedReport({
   activeInspectionId, 
   photos 
 }) {
-  const findings = analysisResults?.findings || [];
+  const findings = React.useMemo(() => {
+    const raw = analysisResults?.findings || [];
+    const uncertain = (analysisResults?.uncertain_findings || []).map((uf, i) => ({
+      ...uf,
+      finding_id: uf.finding_id || `UNC-${i + 1}`,
+      severity: uf.severity || 'Uncertain'
+    }));
+    const rawIds = new Set(raw.map(f => f.finding_id));
+    const newUncertain = uncertain.filter(u => !rawIds.has(u.finding_id));
+    return [...raw, ...newUncertain];
+  }, [analysisResults]);
+
   const [activeBoxModal, setActiveBoxModal] = React.useState(null);
   const [hoveredIdx, setHoveredIdx] = React.useState(null);
   const placedPins = React.useMemo(() => getResolvedCarPins(findings), [findings]);
@@ -319,7 +330,14 @@ export default function UnlockedReport({
               {/* Dynamic SVG Pin Markers - ALL 100% UNLOCKED */}
               {placedPins.map(({ item, idx, cx, cy }) => {
                 const isHovered = hoveredIdx === idx;
-                const pinColor = item.severity === 'Severe' ? '#DC2626' : item.severity === 'Moderate' ? '#E11D48' : '#D97706';
+                const isUncertain = (item.severity || '').toLowerCase() === 'uncertain';
+                const pinColor = item.severity === 'Severe' 
+                  ? '#DC2626' 
+                  : item.severity === 'Moderate' 
+                  ? '#E11D48' 
+                  : isUncertain 
+                  ? '#64748B' 
+                  : '#D97706';
 
                 return (
                   <g 
@@ -345,6 +363,7 @@ export default function UnlockedReport({
                       fill={pinColor} 
                       stroke="#FFFFFF" 
                       strokeWidth={isHovered ? "3" : "2.5"} 
+                      strokeDasharray={isUncertain ? '3 2' : 'none'}
                       className="drop-shadow-sm transition-all"
                     />
                     <text 
@@ -370,6 +389,7 @@ export default function UnlockedReport({
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Minor</span>
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> Moderate</span>
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-600 inline-block"></span> Severe</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-slate-500 inline-block"></span> Uncertain</span>
             </div>
             <span className="font-bold text-slate-800">{vehicleData?.makeModel || 'Vehicle'} • {vehicleData?.plateNumber || 'ID-123'}</span>
           </div>
@@ -441,6 +461,8 @@ export default function UnlockedReport({
                         ? 'bg-red-100 text-red-800 border border-red-200' 
                         : item.severity === 'Moderate' 
                         ? 'bg-rose-100 text-rose-800 border border-rose-200' 
+                        : (item.severity || '').toLowerCase() === 'uncertain'
+                        ? 'bg-slate-100 text-slate-800 border border-slate-300'
                         : 'bg-amber-100 text-amber-800 border border-amber-200'
                     }`}>
                       {item.severity || 'Minor'}
