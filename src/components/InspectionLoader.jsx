@@ -45,10 +45,10 @@ export default function InspectionLoader({ type = 'ai_inspection', vehicleData =
   }, [stages.length]);
 
   return (
-    <div className="w-full max-w-xl mx-auto my-6 p-6 sm:p-8 bg-white rounded-3xl border border-slate-200/90 shadow-lg relative overflow-hidden animate-in fade-in duration-300">
+    <div className="w-full max-w-xl mx-auto my-6 p-6 sm:p-8 bg-white rounded-3xl border border-slate-200/90 shadow-lg relative overflow-hidden isolate animate-in fade-in duration-300">
       {/* Background ambient lighting */}
-      <div className="absolute -top-20 -right-20 w-56 h-56 bg-[#022a5b]/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-20 -left-20 w-56 h-56 bg-blue-400/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 right-0 w-36 h-36 bg-[#022a5b]/8 rounded-full blur-2xl pointer-events-none translate-x-1/4 -translate-y-1/4" />
+      <div className="absolute bottom-0 left-0 w-36 h-36 bg-blue-400/8 rounded-full blur-2xl pointer-events-none -translate-x-1/4 translate-y-1/4" />
 
       {/* Unique Futuristic AI Radar Scanner Visual */}
       <div className="relative flex flex-col items-center text-center pb-2">
@@ -67,11 +67,6 @@ export default function InspectionLoader({ type = 'ai_inspection', vehicleData =
                 </span>
               </div>
             )}
-          </div>
-
-          {/* Scanning Beam Sweep Overlay */}
-          <div className="absolute inset-0 rounded-full overflow-hidden pointer-events-none">
-            <div className="w-full h-1/2 bg-gradient-to-b from-transparent via-cyan-400/30 to-transparent animate-pulse" />
           </div>
         </div>
 

@@ -11,10 +11,10 @@ import InspectionLoader from '@/components/InspectionLoader';
 import { Camera, Cpu, Lock, FileCheck, Check } from 'lucide-react';
 
 const STEPS = [
-  { id: 'checklist', label: '1. Photo Capture', icon: Camera, stepNum: '1' },
-  { id: 'results', label: '2. AI Analysis', icon: Cpu, stepNum: '2' },
-  { id: 'paywall', label: '3. Unlock Report', icon: Lock, stepNum: '3' },
-  { id: 'unlocked', label: '4. Official Certificate', icon: FileCheck, stepNum: '4' },
+  { id: 'checklist', label: '1. Photo Capture', shortLabel: '1. Photos', icon: Camera, stepNum: '1' },
+  { id: 'results', label: '2. AI Analysis', shortLabel: '2. Analysis', icon: Cpu, stepNum: '2' },
+  { id: 'paywall', label: '3. Unlock Report', shortLabel: '3. Unlock', icon: Lock, stepNum: '3' },
+  { id: 'unlocked', label: '4. Official Certificate', shortLabel: '4. Certificate', icon: FileCheck, stepNum: '4' },
 ];
 
 export default function App() {
@@ -308,7 +308,7 @@ export default function App() {
   const currentStepIndex = STEPS.findIndex(s => s.id === currentStep);
 
   return (
-    <div className="min-h-screen bg-[#F1F5F9] text-slate-900 font-sans antialiased flex flex-col items-center justify-start pb-16">
+    <div className="min-h-screen bg-[#F1F5F9] text-slate-900 font-sans antialiased flex flex-col items-center justify-start pb-16 overflow-x-hidden w-full max-w-full">
       {/* Top Header */}
       <Header setCurrentStep={setCurrentStep} currentStep={currentStep} />
 
@@ -340,10 +340,11 @@ export default function App() {
                   }`}>
                     {isPassed ? <Check className="w-3 h-3 stroke-[3]" /> : step.stepNum}
                   </div>
-                  <span className={`text-xs truncate hidden sm:inline ${
+                  <span className={`text-[11px] md:text-xs truncate hidden sm:inline ${
                     isCurrent ? 'text-white font-bold' : isPassed ? 'text-[#022a5b] font-semibold' : 'text-slate-500 font-medium'
                   }`}>
-                    {step.label}
+                    <span className="hidden lg:inline">{step.label}</span>
+                    <span className="inline lg:hidden">{step.shortLabel || step.label}</span>
                   </span>
                 </div>
 

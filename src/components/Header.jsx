@@ -50,9 +50,10 @@ export default function Header({ setCurrentStep, currentStep }) {
           <span className="text-[#022a5b] font-semibold text-xs">AI Vision Ready</span>
         </div>
 
-        <span className="text-xs font-semibold text-[#022a5b] bg-[#022a5b]/5 px-3.5 py-1.5 rounded-xl border border-[#022a5b]/15 flex items-center gap-1.5">
-          <ShieldCheck className="w-4 h-4 text-[#022a5b]" />
-          <span>Inspection Protocol</span>
+        <span className="text-[11px] sm:text-xs font-semibold text-[#022a5b] bg-[#022a5b]/5 px-2.5 sm:px-3.5 py-1.5 rounded-xl border border-[#022a5b]/15 flex items-center gap-1.5 shrink-0">
+          <ShieldCheck className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-[#022a5b]" />
+          <span className="hidden sm:inline">Inspection Protocol</span>
+          <span className="inline sm:hidden">Protocol</span>
         </span>
       </div>
     </header>

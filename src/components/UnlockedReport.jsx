@@ -263,13 +263,13 @@ export default function UnlockedReport({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         
         {/* Left Column: Interactive 2D Top-Down Car Blueprint Model */}
-        <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-slate-200 shadow-xs text-center lg:sticky lg:top-24">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
-              <Car className="w-4 h-4 text-slate-700" />
-              <span>Full Vehicle Blueprint</span>
+        <div className="lg:col-span-5 bg-white rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-xs text-center lg:sticky lg:top-24">
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <h3 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2 min-w-0">
+              <Car className="w-4 h-4 text-slate-700 shrink-0" />
+              <span className="truncate">Full Vehicle Blueprint</span>
             </h3>
-            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+            <span className="text-[11px] sm:text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 shrink-0">
               All Pins Unlocked
             </span>
           </div>
@@ -384,14 +384,14 @@ export default function UnlockedReport({
             </svg>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 mt-4 text-xs font-medium text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Minor</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> Moderate</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-600 inline-block"></span> Severe</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-slate-500 inline-block"></span> Uncertain</span>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 mt-4 text-xs font-medium text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block shrink-0"></span> Minor</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block shrink-0"></span> Moderate</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-600 inline-block shrink-0"></span> Severe</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-slate-500 inline-block shrink-0"></span> Uncertain</span>
             </div>
-            <span className="font-bold text-slate-800">{vehicleData?.makeModel || 'Vehicle'} • {vehicleData?.plateNumber || 'ID-123'}</span>
+            <span className="font-bold text-slate-800 text-[11px] sm:text-xs shrink-0 self-end sm:self-auto">{vehicleData?.makeModel || 'Vehicle'} • {vehicleData?.plateNumber || 'ID-123'}</span>
           </div>
         </div>
 

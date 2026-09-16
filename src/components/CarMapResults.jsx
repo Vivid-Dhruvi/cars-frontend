@@ -209,31 +209,33 @@ export default function CarMapResults({
       )}
 
       {/* Top Header Navigation */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
         <div className="flex items-center gap-3">
           <button 
             aria-label="Back to photo checklist" 
             onClick={() => setCurrentStep('checklist')} 
-            className="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+            className="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <h2 className="text-lg font-bold text-slate-900 leading-tight">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
               Inspection Results & Visual Map
             </h2>
             <p className="text-xs text-slate-500">
-              {findings.length === 0 ? 'No damage detected' : `${findings.length} visual findings detected by Gemini Vision AI`}
+              {findings.length === 0 ? 'No damage detected' : `${findings.length} visual finding${findings.length !== 1 ? 's' : ''} detected by Gemini Vision AI`}
             </p>
           </div>
         </div>
 
-        <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${
+        <span className={`self-start sm:self-auto text-xs font-semibold px-3 py-1 rounded-full border shrink-0 ${
           findings.length === 0 
             ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
             : 'bg-[#022a5b]/10 text-[#022a5b] border-[#022a5b]/20 font-bold'
         }`}>
-          {findings.length === 0 ? '✓ 0 Defects · Clean Vehicle' : `Preliminary: 3 of ${findings.length} findings shown`}
+          {findings.length === 0 
+            ? '✓ 0 Defects · Clean Vehicle' 
+            : `Preliminary: ${Math.min(3, findings.length)} of ${findings.length} finding${findings.length !== 1 ? 's' : ''} shown`}
         </span>
       </div>
 
@@ -241,13 +243,13 @@ export default function CarMapResults({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         
         {/* Left Column: 2D Top-Down Car Outline Blueprint */}
-        <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-slate-200 shadow-xs text-center lg:sticky lg:top-24">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
-              <Car className="w-4 h-4 text-[#022a5b]" />
-              <span>{findings.length === 0 ? 'Vehicle Passed' : 'Damage Coordinates Map'}</span>
+        <div className="lg:col-span-5 bg-white rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-xs text-center lg:sticky lg:top-24">
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <h3 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2 min-w-0">
+              <Car className="w-4 h-4 text-[#022a5b] shrink-0" />
+              <span className="truncate">{findings.length === 0 ? 'Vehicle Passed' : 'Damage Coordinates Map'}</span>
             </h3>
-            <span className="text-xs text-slate-500 font-medium">
+            <span className="text-[11px] sm:text-xs text-slate-500 font-medium shrink-0 bg-slate-100 px-2 py-0.5 rounded-md">
               Top-Down View
             </span>
           </div>
@@ -376,14 +378,14 @@ export default function CarMapResults({
           </div>
 
           {/* Blueprint Legend */}
-          <div className="flex flex-wrap items-center justify-between gap-3 mt-4 text-xs font-medium text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Minor</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> Moderate</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-600 inline-block"></span> Severe</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-slate-500 inline-block"></span> Uncertain</span>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 mt-4 text-xs font-medium text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block shrink-0"></span> Minor</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block shrink-0"></span> Moderate</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-600 inline-block shrink-0"></span> Severe</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-slate-500 inline-block shrink-0"></span> Uncertain</span>
             </div>
-            <span className="font-bold text-slate-800">{vehicleData?.makeModel || 'Vehicle'} • {vehicleData?.plateNumber || 'ID-123'}</span>
+            <span className="font-bold text-slate-800 text-[11px] sm:text-xs shrink-0 self-end sm:self-auto">{vehicleData?.makeModel || 'Vehicle'} • {vehicleData?.plateNumber || 'ID-123'}</span>
           </div>
         </div>
 
@@ -532,15 +534,15 @@ export default function CarMapResults({
               })}
 
               {/* Clean #022a5b Paywall CTA Card */}
-              <div className="bg-gradient-to-br from-[#022a5b]/8 via-white to-[#022a5b]/12 text-slate-900 rounded-3xl p-6 sm:p-7 shadow-xs flex flex-col gap-4 border border-[#022a5b]/20 relative overflow-hidden">
-                <div className="flex items-center justify-between">
+              <div className="bg-gradient-to-br from-[#022a5b]/8 via-white to-[#022a5b]/12 text-slate-900 rounded-3xl p-5 sm:p-7 shadow-xs flex flex-col gap-4 border border-[#022a5b]/20 relative overflow-hidden">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="w-4 h-1 bg-[#022a5b] rounded-full inline-block"></span>
+                    <span className="w-4 h-1 bg-[#022a5b] rounded-full inline-block shrink-0"></span>
                     <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#022a5b]">
                       Official PDF Certificate
                     </span>
                   </div>
-                  <span className="text-xs font-bold text-slate-600 bg-white px-2.5 py-0.5 rounded-full border border-slate-200 shadow-2xs">
+                  <span className="text-[11px] sm:text-xs font-bold text-slate-600 bg-white px-2.5 py-0.5 rounded-full border border-slate-200 shadow-2xs shrink-0">
                     One-Time Unlock
                   </span>
                 </div>

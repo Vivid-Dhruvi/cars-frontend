@@ -54,10 +54,10 @@ export default function PhotoChecklist({
   return (
     <div className="flex flex-col gap-5">
       {/* ── Rich Visible #022a5b Midnight Navy Hero Guidance Banner ── */}
-      <div className="gradient-navy-hero rounded-3xl p-6 sm:p-8 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+      <div className="gradient-navy-hero rounded-3xl p-6 sm:p-8 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden isolate">
         {/* Glow ambient highlight */}
-        <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-blue-300/15 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none translate-x-1/4 -translate-y-1/4" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-300/15 rounded-full blur-2xl pointer-events-none -translate-x-1/4 translate-y-1/4" />
         
         <div className="space-y-2 relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-blue-100 text-xs font-bold border border-white/20 backdrop-blur-md">
