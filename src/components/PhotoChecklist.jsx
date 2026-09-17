@@ -53,6 +53,7 @@ export default function PhotoChecklist({
   isUploading,
 }) {
   const hasCamera = useHasCamera();
+  const [flippedCard, setFlippedCard] = useState(null);
   const progress = Math.round((capturedCount / 14) * 100);
 
   return (
@@ -194,34 +195,57 @@ export default function PhotoChecklist({
                     />
                   </div>
                 ) : (
-                  <div className="relative flex-1 flex flex-col items-center justify-center text-center overflow-hidden min-h-36 group">
-                    {/* Example Image Background with overlay */}
-                    <div className="absolute inset-0 w-full h-full">
-                      <img 
-                        src={getExampleImage(item.id)} 
-                        alt={`Example ${item.title}`} 
-                        className="w-full h-full object-cover opacity-60 group-hover:opacity-75 transition-opacity duration-300 sepia-[.2]" 
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-slate-900/10 mix-blend-multiply" />
-                      <div className="absolute inset-0 bg-white/20" />
-                    </div>
-                    
-                    <div className="relative z-10 flex flex-col items-center gap-1.5 p-4">
-                      <div className="w-10 h-10 rounded-xl bg-white/90 backdrop-blur-sm border border-slate-200/50 flex items-center justify-center shadow-xs">
-                        <Camera className="w-5 h-5 text-[#022a5b]" />
+                  <div className="relative flex-1 min-h-[160px] [perspective:1000px] group">
+                    <div className={`w-full h-full absolute top-0 left-0 transition-transform duration-500 [transform-style:preserve-3d] ${flippedCard === item.id ? '[transform:rotateY(180deg)]' : 'group-hover:[transform:rotateY(180deg)]'}`}>
+                      
+                      {/* FRONT OF MIDDLE SECTION */}
+                      <div className="absolute inset-0 [backface-visibility:hidden] bg-slate-50/50 flex flex-col items-center justify-center text-center p-4 gap-1.5 pointer-events-none">
+                        <button 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setFlippedCard(item.id);
+                          }}
+                          className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-slate-200/50 hover:bg-slate-200 text-slate-500 hover:text-[#022a5b] transition-colors pointer-events-auto"
+                          title="View Example Image"
+                        >
+                          <ImageIcon className="w-4 h-4" />
+                        </button>
+                        
+                        <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-2xs mt-2">
+                          <Camera className="w-5 h-5 text-[#022a5b]" />
+                        </div>
+                        <span className="text-xs font-bold text-slate-800 mt-1">{item.title}</span>
+                        <span className="text-[11px] text-slate-500 font-medium">
+                          {item.guide}
+                        </span>
                       </div>
-                      <span className="text-xs font-bold text-slate-800 bg-white/80 px-2 py-0.5 rounded-md backdrop-blur-sm mt-1">{item.title}</span>
-                      <span className="text-[11px] text-slate-700 font-semibold bg-white/80 px-2 py-0.5 rounded-md backdrop-blur-sm">
-                        {item.guide}
-                      </span>
+
+                      {/* BACK OF MIDDLE SECTION (EXAMPLE IMAGE) */}
+                      <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] bg-slate-900 overflow-hidden shadow-inner">
+                        <img 
+                          src={getExampleImage(item.id)} 
+                          alt={`Example ${item.title}`} 
+                          className="w-full h-full object-cover opacity-90" 
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-slate-900/40" />
+                        
+                        <div className="absolute top-2 left-0 right-0 px-3 flex justify-between items-start">
+                          <span className="text-[10px] font-bold text-white bg-slate-900/60 px-2 py-1 rounded backdrop-blur-md border border-white/10 uppercase tracking-wider">Example</span>
+                          <button 
+                            onClick={() => setFlippedCard(null)}
+                            className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md transition-colors border border-white/30 shadow-sm"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                      
                     </div>
                   </div>
                 )}
 
-                {/* Actions */}
+                {/* Actions (Always outside the flip container) */}
                 <div className="p-2.5 z-10 bg-white border-t border-slate-100 flex flex-col gap-1.5 mt-auto">
-                  <p className="text-xs font-bold text-slate-800 truncate px-1">{item.title}</p>
-                  
                   <div className={`grid gap-1.5 ${hasCamera ? 'grid-cols-2' : 'grid-cols-1'}`}>
                     {hasCamera && (
                       <label
