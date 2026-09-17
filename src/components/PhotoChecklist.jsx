@@ -22,6 +22,10 @@ function useHasCamera() {
   return hasCamera;
 }
 
+const getExampleImage = (id) => {
+  return `/examples/IMAGE_${id}.png`;
+};
+
 const ANGLES = [
   { id: '01', code: 'IMAGE_01', title: 'Direct Front Face',  subtitle: 'Bumper, grille & headlights',    guide: 'Straight-on view' },
   { id: '02', code: 'IMAGE_02', title: 'Windshield & Hood',  subtitle: 'Cowl facing front glass',         guide: 'Avoid sky reflections' },
@@ -190,14 +194,27 @@ export default function PhotoChecklist({
                     />
                   </div>
                 ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center p-4 gap-1.5">
-                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-2xs">
-                      <Camera className="w-5 h-5 text-[#022a5b]" />
+                  <div className="relative flex-1 flex flex-col items-center justify-center text-center overflow-hidden min-h-36 group">
+                    {/* Example Image Background with overlay */}
+                    <div className="absolute inset-0 w-full h-full">
+                      <img 
+                        src={getExampleImage(item.id)} 
+                        alt={`Example ${item.title}`} 
+                        className="w-full h-full object-cover opacity-60 group-hover:opacity-75 transition-opacity duration-300 sepia-[.2]" 
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-slate-900/10 mix-blend-multiply" />
+                      <div className="absolute inset-0 bg-white/20" />
                     </div>
-                    <span className="text-xs font-bold text-slate-800 mt-1">{item.title}</span>
-                    <span className="text-[11px] text-slate-500 font-medium">
-                      {item.guide}
-                    </span>
+                    
+                    <div className="relative z-10 flex flex-col items-center gap-1.5 p-4">
+                      <div className="w-10 h-10 rounded-xl bg-white/90 backdrop-blur-sm border border-slate-200/50 flex items-center justify-center shadow-xs">
+                        <Camera className="w-5 h-5 text-[#022a5b]" />
+                      </div>
+                      <span className="text-xs font-bold text-slate-800 bg-white/80 px-2 py-0.5 rounded-md backdrop-blur-sm mt-1">{item.title}</span>
+                      <span className="text-[11px] text-slate-700 font-semibold bg-white/80 px-2 py-0.5 rounded-md backdrop-blur-sm">
+                        {item.guide}
+                      </span>
+                    </div>
                   </div>
                 )}
 
