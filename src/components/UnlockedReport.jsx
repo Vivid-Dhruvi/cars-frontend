@@ -297,7 +297,7 @@ export default function UnlockedReport({
       const response = await fetch(`${API_BASE}/api/report/pdf`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vehicleData, analysisResults, photos: activePhotos })
+        body: JSON.stringify({ vehicleData, analysisResults, photos: activePhotos, userInfo })
       });
 
       if (!response.ok) {
