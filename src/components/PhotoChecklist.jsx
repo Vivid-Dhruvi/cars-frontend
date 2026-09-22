@@ -57,7 +57,8 @@ export default function PhotoChecklist({
   const progress = Math.round((capturedCount / 14) * 100);
 
   return (
-    <div className="flex flex-col gap-5">
+    <>
+      <div className="flex flex-col gap-5">
       {/* ── Rich Visible #022a5b Midnight Navy Hero Guidance Banner ── */}
       <div className="gradient-navy-hero rounded-3xl p-6 sm:p-8 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden isolate">
         {/* Glow ambient highlight */}
@@ -73,7 +74,6 @@ export default function PhotoChecklist({
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">
             Vehicle Photo Checklist
           </h1>
-
           <p className="text-blue-100/90 text-xs sm:text-sm max-w-xl leading-relaxed">
             Capture or upload clear photos for each designated angle. Our AI computer vision model inspects panels, bumpers, glass, and wheels.
           </p>
@@ -105,18 +105,18 @@ export default function PhotoChecklist({
             <p className="text-xs text-slate-500 mt-0.5">
               {hasCamera
                 ? 'Use camera for instant photo capture or select photos from your device gallery.'
-                : 'Upload vehicle photos for each angle below.'}
+                : 'Select photos from your device for each specified angle.'}
             </p>
           </div>
 
           <div className="flex items-center gap-3 bg-[#022a5b]/5 px-3.5 py-1.5 rounded-xl border border-[#022a5b]/15 shrink-0">
             <div className="w-24 h-2 rounded-full bg-slate-200 overflow-hidden">
-              <div
+              <div 
                 className="h-full rounded-full bg-[#022a5b] transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <span className="text-xs font-bold text-[#022a5b]">{progress}%</span>
+            <span className="text-[11px] font-extrabold text-[#022a5b]">{progress}%</span>
           </div>
         </div>
 
@@ -163,7 +163,7 @@ export default function PhotoChecklist({
                   onChange={(e) => e.target.files?.[0] && handleFileUpload(item.id, e.target.files[0])}
                 />
 
-                {/* Card header with soft #022a5b number badge (NO black background) */}
+                {/* Card header */}
                 <div className="p-3 flex items-center justify-between z-10 bg-white border-b border-slate-100">
                   <div className="flex items-center gap-1.5">
                     <span className={`w-6 h-6 rounded-lg text-xs font-extrabold flex items-center justify-center transition-colors ${
@@ -195,57 +195,32 @@ export default function PhotoChecklist({
                     />
                   </div>
                 ) : (
-                  <div className="relative flex-1 min-h-[160px] [perspective:1000px] group">
-                    <div className={`w-full h-full absolute top-0 left-0 transition-transform duration-500 [transform-style:preserve-3d] ${flippedCard === item.id ? '[transform:rotateY(180deg)]' : 'group-hover:[transform:rotateY(180deg)]'}`}>
-                      
-                      {/* FRONT OF MIDDLE SECTION */}
-                      <div className="absolute inset-0 [backface-visibility:hidden] bg-slate-50/50 flex flex-col items-center justify-center text-center p-4 gap-1.5 pointer-events-none">
-                        <button 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setFlippedCard(item.id);
-                          }}
-                          className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-slate-200/50 hover:bg-slate-200 text-slate-500 hover:text-[#022a5b] transition-colors pointer-events-auto"
-                          title="View Example Image"
-                        >
-                          <ImageIcon className="w-4 h-4" />
-                        </button>
-                        
-                        <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-2xs mt-2">
-                          <Camera className="w-5 h-5 text-[#022a5b]" />
-                        </div>
-                        <span className="text-xs font-bold text-slate-800 mt-1">{item.title}</span>
-                        <span className="text-[11px] text-slate-500 font-medium">
-                          {item.guide}
-                        </span>
+                  <div className="relative flex flex-col bg-white overflow-hidden group">
+                    {/* Top: Wireframe Sketch Outline using CSS */}
+                    <div className="relative h-32 sm:h-40 w-full overflow-hidden bg-slate-50 border-b border-slate-100 flex items-center justify-center">
+                      <img 
+                        src={getExampleImage(item.id)} 
+                        alt={`Example ${item.title}`} 
+                        className="w-[120%] h-[120%] object-cover mix-blend-multiply opacity-25 grayscale contrast-150 brightness-110 group-hover:opacity-40 transition-opacity duration-300" 
+                      />
+                      {/* Subdued Outline Badge */}
+                      <div className="absolute top-2 left-2 bg-white/80 backdrop-blur-sm border border-slate-200 text-slate-500 px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider">
+                        Outline Guide
                       </div>
-
-                      {/* BACK OF MIDDLE SECTION (EXAMPLE IMAGE) */}
-                      <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] bg-slate-900 overflow-hidden shadow-inner">
-                        <img 
-                          src={getExampleImage(item.id)} 
-                          alt={`Example ${item.title}`} 
-                          className="w-full h-full object-cover opacity-90" 
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-slate-900/40" />
-                        
-                        <div className="absolute top-2 left-0 right-0 px-3 flex justify-between items-start">
-                          <span className="text-[10px] font-bold text-white bg-slate-900/60 px-2 py-1 rounded backdrop-blur-md border border-white/10 uppercase tracking-wider">Example</span>
-                          <button 
-                            onClick={() => setFlippedCard(null)}
-                            className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md transition-colors border border-white/30 shadow-sm"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                          </button>
-                        </div>
-                      </div>
-                      
+                    </div>
+                    
+                    {/* Bottom: Text Content */}
+                    <div className="p-3.5 flex flex-col items-center text-center gap-1">
+                      <span className="text-xs font-bold text-slate-800">{item.title}</span>
+                      <span className="text-[11px] text-slate-500 font-medium">
+                        {item.guide}
+                      </span>
                     </div>
                   </div>
                 )}
 
-                {/* Actions (Always outside the flip container) */}
-                <div className="p-2.5 z-10 bg-white border-t border-slate-100 flex flex-col gap-1.5 mt-auto">
+                {/* Actions (Always at bottom) */}
+                <div className="p-2.5 z-10 bg-slate-50 border-t border-slate-100 flex flex-col gap-1.5 mt-auto">
                   <div className={`grid gap-1.5 ${hasCamera ? 'grid-cols-2' : 'grid-cols-1'}`}>
                     {hasCamera && (
                       <label
@@ -258,10 +233,10 @@ export default function PhotoChecklist({
                     )}
                     <label
                       htmlFor={`gal-input-${item.id}`}
-                      className="min-h-9 py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors active:scale-95 border border-slate-200"
+                      className="min-h-9 py-1.5 px-2 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors active:scale-95 border border-slate-200 shadow-sm"
                     >
                       <ImageIcon className="w-3.5 h-3.5 text-slate-500" />
-                      <span>{hasCamera ? 'Gallery' : 'Upload Photo'}</span>
+                      <span>{hasCamera ? 'Gallery' : 'Upload'}</span>
                     </label>
                   </div>
                 </div>
@@ -298,5 +273,6 @@ export default function PhotoChecklist({
         </div>
       </div>
     </div>
+    </>
   );
 }
