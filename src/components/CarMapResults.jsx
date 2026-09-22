@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 
 import DamagePhotoDialog from './DamagePhotoDialog';
 import { getFindingEvidence } from './findingEvidence.mjs';
+import VehicleBlueprintVectors from './VehicleBlueprintVectors';
 
 // Helper function to guarantee vehicle part text label matches the exact photo angle slot
 const getSanitizedVehiclePart = (item) => {
@@ -48,7 +49,7 @@ const getSanitizedVehiclePart = (item) => {
 
 // Helper function to resolve dynamic non-overlapping 2D car map coordinates for all findings
 function getResolvedCarPins(findings) {
-  const MIN_PIN_DISTANCE = 32;
+  const MIN_PIN_DISTANCE = 28;
   const placedPins = [];
 
   findings.forEach((item, idx) => {
@@ -81,61 +82,111 @@ function getResolvedCarPins(findings) {
       }
     }
 
-    let cx = 110;
-    let cy = 220;
+    // ════════════════════════════════════════════════════════════════════════════
+    // 5-Panel Unfolded Pure Vector SVG Coordinates (viewBox 0 0 440 560)
+    // Matches standard automotive inspection schematic:
+    //   • Front View (top): y 16 - 80, x 144 - 296
+    //   • Center Body (top-down): y 95 - 445, center line at x = 220
+    //   • Left Side Profile (doors x 102, wheels x 56): y 95 - 445
+    //   • Right Side Profile (doors x 338, wheels x 384): y 95 - 445
+    //   • Rear View (bottom): y 460 - 536, x 144 - 296
+    // ════════════════════════════════════════════════════════════════════════════
+    let cx = 220;
+    let cy = 275;
 
-    if (part.includes('front_bumper') || part.includes('grille') || part.includes('headlight')) {
-      cy = 42;
-      cx = side === 'left' ? 75 : side === 'right' ? 145 : 110;
-    } else if (part.includes('rear_bumper') || part.includes('taillight') || part.includes('exhaust')) {
-      cy = 395;
-      cx = side === 'left' ? 75 : side === 'right' ? 145 : 110;
-    } else if (part.includes('hood') || part.includes('bonnet')) {
-      cy = 85;
-      cx = side === 'left' ? 85 : side === 'right' ? 135 : 110;
+    // --- Front bumper / grille / headlights / front corners ---
+    if (part.includes('front_bumper') || part.includes('grille') || part.includes('headlight') || (part.includes('front') && part.includes('corner'))) {
+      cy = 60;
+      cx = side === 'left' ? 168 : side === 'right' ? 272 : 220;
+
+    // --- Rear bumper / taillights / exhaust / rear corners ---
+    } else if (part.includes('rear_bumper') || part.includes('taillight') || part.includes('exhaust') || (part.includes('rear') && part.includes('corner'))) {
+      cy = 490;
+      cx = side === 'left' ? 169 : side === 'right' ? 271 : 220;
+
+    // --- Hood / bonnet / cowl (center body top) ---
+    } else if (part.includes('hood') || part.includes('bonnet') || part.includes('cowl')) {
+      cy = 135;
+      cx = side === 'left' ? 195 : side === 'right' ? 245 : 220;
+
+    // --- Front windshield ---
     } else if (part.includes('windshield') && !part.includes('rear')) {
-      cy = 145;
-      cx = side === 'left' ? 90 : side === 'right' ? 130 : 110;
+      cy = 195;
+      cx = side === 'left' ? 200 : side === 'right' ? 240 : 220;
+
+    // --- Rear windshield ---
     } else if (part.includes('rear_windshield')) {
-      cy = 305;
-      cx = side === 'left' ? 90 : side === 'right' ? 130 : 110;
+      cy = 352;
+      cx = side === 'left' ? 200 : side === 'right' ? 240 : 220;
+
+    // --- Trunk / tailgate / boot ---
     } else if (part.includes('trunk') || part.includes('tailgate') || part.includes('boot')) {
-      cy = 350;
-      cx = side === 'left' ? 85 : side === 'right' ? 135 : 110;
+      cy = 410;
+      cx = side === 'left' ? 195 : side === 'right' ? 245 : 220;
+
+    // --- Roof (center body) ---
     } else if (part.includes('roof')) {
-      cy = 230;
-      cx = side === 'left' ? 85 : side === 'right' ? 135 : 110;
+      cy = 275;
+      cx = side === 'left' ? 198 : side === 'right' ? 242 : 220;
+
+    // --- Quarter panel / fender → unfolded side panels ---
     } else if (part.includes('quarter_panel') || part.includes('fender')) {
       if (part.includes('front')) {
-        cy = 90;
-        cx = side === 'right' ? 152 : 68;
+        cy = 118;
+        cx = side === 'right' ? 345 : 95;
       } else {
-        cy = 320;
-        cx = side === 'right' ? 152 : 68;
+        cy = 422;
+        cx = side === 'right' ? 345 : 95;
       }
+
+    // --- Doors → unfolded side panels (clearly separated from roof at x=220) ---
     } else if (part.includes('door')) {
       if (part.includes('rear')) {
-        cy = 250;
-        cx = side === 'right' ? 154 : 66;
+        cy = 315;
+        cx = side === 'right' ? 338 : 102;
       } else {
-        cy = 175;
-        cx = side === 'right' ? 154 : 66;
+        cy = 230;
+        cx = side === 'right' ? 338 : 102;
       }
+
+    // --- Wheels / rims / tires → at outer wheel arches on side panels ---
     } else if (part.includes('wheel') || part.includes('rim') || part.includes('tire')) {
       if (part.includes('front')) {
-        cx = side === 'right' ? 182 : 38;
-        cy = 104;
+        cx = side === 'right' ? 384 : 56;
+        cy = 145;
       } else {
-        cx = side === 'right' ? 182 : 38;
-        cy = 334;
+        cx = side === 'right' ? 384 : 56;
+        cy = 395;
       }
+
+    // --- Side mirrors ---
     } else if (part.includes('mirror')) {
-      cx = side === 'right' ? 180 : 40;
-      cy = 142;
+      cx = side === 'right' ? 302 : 138;
+      cy = 175;
+
+    // --- A-pillar / B-pillar / C-pillar ---
+    } else if (part.includes('pillar')) {
+      if (part.includes('a_pillar') || part.includes('a-pillar')) {
+        cx = side === 'right' ? 305 : 135;
+        cy = 195;
+      } else if (part.includes('c_pillar') || part.includes('c-pillar')) {
+        cx = side === 'right' ? 305 : 135;
+        cy = 350;
+      } else {
+        cx = side === 'right' ? 310 : 130;
+        cy = 273;
+      }
+
+    // --- Rocker panel / side sill ---
+    } else if (part.includes('rocker') || part.includes('sill')) {
+      cx = side === 'right' ? 360 : 80;
+      cy = 273;
+
+    // --- Fallback: side or center ---
     } else {
-      if (side === 'left') { cx = 68; cy = 220; }
-      else if (side === 'right') { cx = 152; cy = 220; }
-      else { cx = 110; cy = 220; }
+      if (side === 'left') { cx = 100; cy = 273; }
+      else if (side === 'right') { cx = 340; cy = 273; }
+      else { cx = 220; cy = 275; }
     }
 
     let attempts = 0;
@@ -162,8 +213,8 @@ function getResolvedCarPins(findings) {
       attempts++;
     }
 
-    cx = Math.max(36, Math.min(184, cx));
-    cy = Math.max(38, Math.min(402, cy));
+    cx = Math.max(16, Math.min(424, cx));
+    cy = Math.max(16, Math.min(544, cy));
 
     placedPins.push({ item, idx, cx, cy });
   });
@@ -242,7 +293,7 @@ export default function CarMapResults({
       {/* 2-Column Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         
-        {/* Left Column: 2D Top-Down Car Outline Blueprint */}
+        {/* Left Column: Unfolded Car Blueprint */}
         <div className="lg:col-span-5 bg-white rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-xs text-center lg:sticky lg:top-24">
           <div className="flex items-center justify-between gap-2 mb-1">
             <h3 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2 min-w-0">
@@ -250,7 +301,7 @@ export default function CarMapResults({
               <span className="truncate">{findings.length === 0 ? 'Vehicle Passed' : 'Damage Coordinates Map'}</span>
             </h3>
             <span className="text-[11px] sm:text-xs text-slate-500 font-medium shrink-0 bg-slate-100 px-2 py-0.5 rounded-md">
-              Top-Down View
+              Unfolded View
             </span>
           </div>
           <p className="text-xs text-slate-500 mb-4 text-left">
@@ -259,56 +310,17 @@ export default function CarMapResults({
               : 'Click any numbered pin to inspect the photo and damage location.'}
           </p>
 
-          {/* Clean Light Car Schematic Container */}
-          <div className="w-full h-96 bg-slate-50 rounded-2xl border border-slate-200 relative flex items-center justify-center overflow-hidden p-4">
-            <svg className="h-full w-auto" viewBox="0 0 220 440" fill="none" xmlns="http://www.w3.org/2000/svg">
-              {/* Outer Vehicle Body Shell */}
-              <path 
-                d="M 60 45 C 60 25, 160 25, 160 45 L 170 120 C 180 160, 180 270, 170 320 L 160 395 C 160 415, 60 415, 60 395 L 50 320 C 40 270, 40 160, 50 120 Z" 
-                fill="#E2E8F0" 
-                stroke="#94A3B8" 
-                strokeWidth="2" 
-              />
+          {/* 5-Panel Unfolded Car Inspection Diagram (100% Pure Vector SVG) */}
+          <div className="w-full bg-[#F1F5F9] rounded-2xl border border-slate-200 relative flex items-center justify-center overflow-hidden p-2.5 shadow-xs" style={{ aspectRatio: '440 / 560' }}>
+            <svg className="w-full h-full" viewBox="0 0 440 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <filter id="car-map-pin-shadow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#000000" floodOpacity="0.35" />
+                </filter>
+              </defs>
 
-              {/* Inner Roof / Cabin Outlines */}
-              <rect x="62" y="180" width="96" height="110" rx="16" fill="#F1F5F9" stroke="#CBD5E1" strokeWidth="1.5" />
-              
-              {/* Front Windshield (Soft Blue Glass) */}
-              <path d="M 62 135 C 75 125, 145 125, 158 135 C 152 165, 68 165, 62 135 Z" fill="#BFDBFE" stroke="#93C5FD" strokeWidth="1.5" />
-
-              {/* Rear Glass (Soft Blue Glass) */}
-              <path d="M 64 300 C 75 290, 145 290, 156 300 C 150 330, 70 330, 64 300 Z" fill="#BFDBFE" stroke="#93C5FD" strokeWidth="1.5" />
-
-              {/* Headlights (Soft Yellow) */}
-              <path d="M 58 35 C 70 32, 90 32, 92 40 L 54 44 Z" fill="#FDE68A" />
-              <path d="M 162 35 C 150 32, 130 32, 128 40 L 166 44 Z" fill="#FDE68A" />
-
-              {/* Taillights (Soft Red) */}
-              <path d="M 60 398 L 88 398 L 85 405 L 60 404 Z" fill="#FCA5A5" />
-              <path d="M 160 398 L 132 398 L 135 405 L 160 404 Z" fill="#FCA5A5" />
-
-              {/* Side Mirrors */}
-              <path d="M 40 135 C 34 135, 34 150, 48 150 L 48 142 Z" fill="#64748B" />
-              <path d="M 180 135 C 186 135, 186 150, 172 150 L 172 142 Z" fill="#64748B" />
-
-              {/* Side Wheels */}
-              <g fill="#475569">
-                <rect x="24" y="80" width="18" height="48" rx="6" />
-                <circle cx="42" cy="104" r="5" fill="#94A3B8" />
-                
-                <rect x="178" y="80" width="18" height="48" rx="6" />
-                <circle cx="178" cy="104" r="5" fill="#94A3B8" />
-                
-                <rect x="24" y="310" width="18" height="48" rx="6" />
-                <circle cx="42" cy="334" r="5" fill="#94A3B8" />
-                
-                <rect x="178" y="310" width="18" height="48" rx="6" />
-                <circle cx="178" cy="334" r="5" fill="#94A3B8" />
-              </g>
-
-              {/* Cutlines */}
-              <path d="M 70 70 Q 110 58 150 70" stroke="#CBD5E1" strokeWidth="1.5" strokeDasharray="3 2" fill="none" />
-              <path d="M 70 365 Q 110 375 150 365" stroke="#CBD5E1" strokeWidth="1.5" strokeDasharray="3 2" fill="none" />
+              {/* Exact reference schematic rendered purely with vector SVG shapes */}
+              <VehicleBlueprintVectors />
 
               {/* Dynamic Pin Markers */}
               {placedPins.map(({ item, idx, cx, cy }) => {
@@ -319,7 +331,7 @@ export default function CarMapResults({
                   : item.severity === 'Moderate' 
                   ? '#E11D48' 
                   : isUncertain 
-                  ? '#64748B' 
+                  ? '#475569' 
                   : '#D97706';
 
                 return (
@@ -339,7 +351,7 @@ export default function CarMapResults({
                         }
                       } 
                     }}
-                    className="cursor-pointer hover:opacity-90 active:scale-95 transition-all select-none"
+                    className="cursor-pointer select-none group"
                     onClick={() => {
                       if (isLocked) {
                         toast.info(`Damage #${idx + 1} (${getSanitizedVehiclePart(item)}) is locked. Unlock full report to inspect.`);
@@ -357,7 +369,8 @@ export default function CarMapResults({
                       stroke="#FFFFFF" 
                       strokeWidth="2.5" 
                       strokeDasharray={isUncertain ? '3 2' : 'none'}
-                      className="shadow-sm"
+                      filter="url(#car-map-pin-shadow)"
+                      className="transition-all duration-150 group-hover:stroke-slate-100 group-hover:brightness-110"
                     />
                     <text 
                       x={cx} 
@@ -368,6 +381,7 @@ export default function CarMapResults({
                       fontWeight="bold" 
                       textAnchor="middle" 
                       fontFamily="sans-serif"
+                      className="pointer-events-none select-none"
                     >
                       {idx + 1}
                     </text>

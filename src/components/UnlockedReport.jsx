@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 
 import DamagePhotoDialog from './DamagePhotoDialog';
 import { getFindingEvidence } from './findingEvidence.mjs';
+import VehicleBlueprintVectors from './VehicleBlueprintVectors';
 
 // Helper function to guarantee vehicle part text label matches the exact photo angle slot
 const getSanitizedVehiclePart = (item) => {
@@ -48,7 +49,7 @@ const getSanitizedVehiclePart = (item) => {
 
 // Helper function to resolve dynamic non-overlapping 2D car map coordinates for all findings
 function getResolvedCarPins(findings) {
-  const MIN_PIN_DISTANCE = 32;
+  const MIN_PIN_DISTANCE = 28;
   const placedPins = [];
 
   findings.forEach((item, idx) => {
@@ -81,61 +82,111 @@ function getResolvedCarPins(findings) {
       }
     }
 
-    let cx = 110;
-    let cy = 220;
+    // ════════════════════════════════════════════════════════════════════════════
+    // 5-Panel Unfolded Pure Vector SVG Coordinates (viewBox 0 0 440 560)
+    // Matches standard automotive inspection schematic:
+    //   • Front View (top): y 16 - 80, x 144 - 296
+    //   • Center Body (top-down): y 95 - 445, center line at x = 220
+    //   • Left Side Profile (doors x 102, wheels x 56): y 95 - 445
+    //   • Right Side Profile (doors x 338, wheels x 384): y 95 - 445
+    //   • Rear View (bottom): y 460 - 536, x 144 - 296
+    // ════════════════════════════════════════════════════════════════════════════
+    let cx = 220;
+    let cy = 275;
 
-    if (part.includes('front_bumper') || part.includes('grille') || part.includes('headlight')) {
-      cy = 42;
-      cx = side === 'left' ? 75 : side === 'right' ? 145 : 110;
-    } else if (part.includes('rear_bumper') || part.includes('taillight') || part.includes('exhaust')) {
-      cy = 395;
-      cx = side === 'left' ? 75 : side === 'right' ? 145 : 110;
-    } else if (part.includes('hood') || part.includes('bonnet')) {
-      cy = 85;
-      cx = side === 'left' ? 85 : side === 'right' ? 135 : 110;
+    // --- Front bumper / grille / headlights / front corners ---
+    if (part.includes('front_bumper') || part.includes('grille') || part.includes('headlight') || (part.includes('front') && part.includes('corner'))) {
+      cy = 60;
+      cx = side === 'left' ? 168 : side === 'right' ? 272 : 220;
+
+    // --- Rear bumper / taillights / exhaust / rear corners ---
+    } else if (part.includes('rear_bumper') || part.includes('taillight') || part.includes('exhaust') || (part.includes('rear') && part.includes('corner'))) {
+      cy = 490;
+      cx = side === 'left' ? 169 : side === 'right' ? 271 : 220;
+
+    // --- Hood / bonnet / cowl (center body top) ---
+    } else if (part.includes('hood') || part.includes('bonnet') || part.includes('cowl')) {
+      cy = 135;
+      cx = side === 'left' ? 195 : side === 'right' ? 245 : 220;
+
+    // --- Front windshield ---
     } else if (part.includes('windshield') && !part.includes('rear')) {
-      cy = 145;
-      cx = side === 'left' ? 90 : side === 'right' ? 130 : 110;
+      cy = 195;
+      cx = side === 'left' ? 200 : side === 'right' ? 240 : 220;
+
+    // --- Rear windshield ---
     } else if (part.includes('rear_windshield')) {
-      cy = 305;
-      cx = side === 'left' ? 90 : side === 'right' ? 130 : 110;
+      cy = 352;
+      cx = side === 'left' ? 200 : side === 'right' ? 240 : 220;
+
+    // --- Trunk / tailgate / boot ---
     } else if (part.includes('trunk') || part.includes('tailgate') || part.includes('boot')) {
-      cy = 350;
-      cx = side === 'left' ? 85 : side === 'right' ? 135 : 110;
+      cy = 410;
+      cx = side === 'left' ? 195 : side === 'right' ? 245 : 220;
+
+    // --- Roof (center body) ---
     } else if (part.includes('roof')) {
-      cy = 230;
-      cx = side === 'left' ? 85 : side === 'right' ? 135 : 110;
+      cy = 275;
+      cx = side === 'left' ? 198 : side === 'right' ? 242 : 220;
+
+    // --- Quarter panel / fender → unfolded side panels ---
     } else if (part.includes('quarter_panel') || part.includes('fender')) {
       if (part.includes('front')) {
-        cy = 90;
-        cx = side === 'right' ? 152 : 68;
+        cy = 118;
+        cx = side === 'right' ? 345 : 95;
       } else {
-        cy = 320;
-        cx = side === 'right' ? 152 : 68;
+        cy = 422;
+        cx = side === 'right' ? 345 : 95;
       }
+
+    // --- Doors → unfolded side panels (clearly separated from roof at x=220) ---
     } else if (part.includes('door')) {
       if (part.includes('rear')) {
-        cy = 250;
-        cx = side === 'right' ? 154 : 66;
+        cy = 315;
+        cx = side === 'right' ? 338 : 102;
       } else {
-        cy = 175;
-        cx = side === 'right' ? 154 : 66;
+        cy = 230;
+        cx = side === 'right' ? 338 : 102;
       }
+
+    // --- Wheels / rims / tires → at outer wheel arches on side panels ---
     } else if (part.includes('wheel') || part.includes('rim') || part.includes('tire')) {
       if (part.includes('front')) {
-        cx = side === 'right' ? 182 : 38;
-        cy = 104;
+        cx = side === 'right' ? 384 : 56;
+        cy = 145;
       } else {
-        cx = side === 'right' ? 182 : 38;
-        cy = 334;
+        cx = side === 'right' ? 384 : 56;
+        cy = 395;
       }
+
+    // --- Side mirrors ---
     } else if (part.includes('mirror')) {
-      cx = side === 'right' ? 180 : 40;
-      cy = 142;
+      cx = side === 'right' ? 302 : 138;
+      cy = 175;
+
+    // --- A-pillar / B-pillar / C-pillar ---
+    } else if (part.includes('pillar')) {
+      if (part.includes('a_pillar') || part.includes('a-pillar')) {
+        cx = side === 'right' ? 305 : 135;
+        cy = 195;
+      } else if (part.includes('c_pillar') || part.includes('c-pillar')) {
+        cx = side === 'right' ? 305 : 135;
+        cy = 350;
+      } else {
+        cx = side === 'right' ? 310 : 130;
+        cy = 273;
+      }
+
+    // --- Rocker panel / side sill ---
+    } else if (part.includes('rocker') || part.includes('sill')) {
+      cx = side === 'right' ? 360 : 80;
+      cy = 273;
+
+    // --- Fallback: side or center ---
     } else {
-      if (side === 'left') { cx = 68; cy = 220; }
-      else if (side === 'right') { cx = 152; cy = 220; }
-      else { cx = 110; cy = 220; }
+      if (side === 'left') { cx = 100; cy = 273; }
+      else if (side === 'right') { cx = 340; cy = 273; }
+      else { cx = 220; cy = 275; }
     }
 
     let attempts = 0;
@@ -162,8 +213,8 @@ function getResolvedCarPins(findings) {
       attempts++;
     }
 
-    cx = Math.max(36, Math.min(184, cx));
-    cy = Math.max(38, Math.min(402, cy));
+    cx = Math.max(16, Math.min(424, cx));
+    cy = Math.max(16, Math.min(544, cy));
 
     placedPins.push({ item, idx, cx, cy });
   });
@@ -173,11 +224,17 @@ function getResolvedCarPins(findings) {
 
 export default function UnlockedReport({ 
   vehicleData, 
-  userInfo, 
+  userInfo,
   analysisResults, 
-  activeInspectionId, 
-  photos 
+  activeInspectionId,
+  photos, 
+  onBack,
+  onReset 
 }) {
+  const [activeBoxModal, setActiveBoxModal] = React.useState(null);
+  const [downloading, setDownloading] = React.useState(false);
+  const [hoveredIdx, setHoveredIdx] = React.useState(null);
+
   const findings = React.useMemo(() => {
     const raw = analysisResults?.findings || [];
     const uncertain = (analysisResults?.uncertain_findings || []).map((uf, i) => ({
@@ -190,8 +247,6 @@ export default function UnlockedReport({
     return [...raw, ...newUncertain];
   }, [analysisResults]);
 
-  const [activeBoxModal, setActiveBoxModal] = React.useState(null);
-  const [hoveredIdx, setHoveredIdx] = React.useState(null);
   const placedPins = React.useMemo(() => getResolvedCarPins(findings), [findings]);
   const activePhotos = React.useMemo(() => {
     return (photos && Object.values(photos).some(p => p && (p.url || typeof p === 'string')))
@@ -199,17 +254,41 @@ export default function UnlockedReport({
       : (analysisResults?.photos || {});
   }, [photos, analysisResults]);
 
-  const downloadPdf = () => {
-    const inspId = activeInspectionId || analysisResults?.inspection_id || 'INS-DEMO';
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    window.open(`${API_BASE}/api/reports/${inspId}/pdf`, '_blank');
-    toast.success('Official PDF Certificate generated!');
-  }; 
+  const handleDownloadPdf = async () => {
+    try {
+      setDownloading(true);
+      toast.info('Generating official certified PDF report...');
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${API_BASE}/api/report/pdf`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vehicleData, analysisResults, photos: activePhotos })
+      });
 
-  const displayEmail = userInfo?.email || analysisResults?.user_info?.email || (typeof window !== 'undefined' ? localStorage.getItem('carsinsure_user_email') : '') || 'your email';
+      if (!response.ok) {
+        throw new Error(`PDF generation failed: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `CarsInsure-Certificate-${vehicleData?.plateNumber || 'ID-123'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Certified inspection report downloaded successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Unable to download PDF. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       {activeBoxModal && (
         <DamagePhotoDialog 
           item={activeBoxModal.item} 
@@ -219,50 +298,36 @@ export default function UnlockedReport({
         />
       )}
 
-      {/* Payment Success Banner (Refined Proportionate Executive Card) */}
-      <div className="bg-gradient-to-r from-[#022a5b]/6 via-white to-emerald-50/50 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs border border-[#022a5b]/15 relative overflow-hidden">
-        {/* Subtle Top Accent Bar */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#022a5b] via-[#04428e] via-sky-500 to-emerald-500" />
-
-        <div className="flex min-w-0 flex-1 items-center gap-3.5 relative z-10">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0 shadow-2xs">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+      {/* Top Banner: Unlocked State Notification */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-2xl">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <CheckCircle2 className="w-5 h-5" />
           </div>
-          <div className="min-w-0 space-y-0.5">
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[10px] font-bold uppercase tracking-wider border border-emerald-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
-              <span>Payment Verified • Full Report Unlocked</span>
-            </div>
-            
-            {/* Refined Proportional Gradient Title */}
-            <h2 className="font-bold text-base sm:text-lg tracking-tight leading-tight">
-              <span className="bg-gradient-to-r from-[#022a5b] via-[#04428e] to-[#0a66c2] bg-clip-text text-transparent">
-                Official Inspection Certificate
-              </span>{' '}
-              <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 bg-clip-text text-transparent">
-                Ready
-              </span>
-            </h2>
-
-            <p className="text-[11px] text-slate-500">
-              Signed PDF certificate emailed to <span className="font-bold text-slate-800 underline decoration-slate-300">{displayEmail}</span>
+          <div>
+            <h3 className="font-bold text-slate-900 text-sm sm:text-base">Comprehensive Report Unlocked</h3>
+            <p className="text-xs text-slate-600">
+              All {findings.length} findings, bounding coordinates, and certified export tools are activated.
             </p>
           </div>
         </div>
 
-        <button 
-          onClick={downloadPdf}
-          className="w-full sm:w-auto px-4 h-10 bg-gradient-to-r from-[#022a5b] via-[#033c80] to-[#022a5b] hover:from-[#033c80] hover:to-[#044a9e] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer shrink-0 active:scale-98 relative z-10"
-        >
-          <Download className="w-3.5 h-3.5 text-white" />
-          <span>Download PDF Certificate</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={handleDownloadPdf}
+            disabled={downloading}
+            className="px-4 py-2 bg-[#022a5b] text-white rounded-xl text-xs font-bold hover:bg-[#022a5b]/90 transition-all shadow-xs flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            {downloading ? 'Exporting...' : 'Download PDF Certificate'}
+          </button>
+        </div>
       </div>
 
-      {/* 2-Column Grid */}
+      {/* 2-Column Main Report View */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         
-        {/* Left Column: Interactive 2D Top-Down Car Blueprint Model */}
+        {/* Left Column: Full Unlocked Blueprint */}
         <div className="lg:col-span-5 bg-white rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-xs text-center lg:sticky lg:top-24">
           <div className="flex items-center justify-between gap-2 mb-1">
             <h3 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2 min-w-0">
@@ -277,55 +342,16 @@ export default function UnlockedReport({
             Select any damage pin to inspect full resolution photos and box coordinates.
           </p>
 
-          <div className="w-full h-96 bg-slate-50 rounded-2xl border border-slate-200 relative flex items-center justify-center overflow-hidden p-4">
-            <svg className="h-full w-auto" viewBox="0 0 220 440" fill="none" xmlns="http://www.w3.org/2000/svg">
-              {/* Outer Vehicle Body Shell */}
-              <path 
-                d="M 60 45 C 60 25, 160 25, 160 45 L 170 120 C 180 160, 180 270, 170 320 L 160 395 C 160 415, 60 415, 60 395 L 50 320 C 40 270, 40 160, 50 120 Z" 
-                fill="#E2E8F0" 
-                stroke="#94A3B8" 
-                strokeWidth="2" 
-              />
+          <div className="w-full bg-[#F1F5F9] rounded-2xl border border-slate-200 relative flex items-center justify-center overflow-hidden p-2.5 shadow-xs" style={{ aspectRatio: '440 / 560' }}>
+            <svg className="w-full h-full" viewBox="0 0 440 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <filter id="unlocked-pin-shadow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#000000" floodOpacity="0.35" />
+                </filter>
+              </defs>
 
-              {/* Inner Roof / Cabin Outlines */}
-              <rect x="62" y="180" width="96" height="110" rx="16" fill="#F1F5F9" stroke="#CBD5E1" strokeWidth="1.5" />
-              
-              {/* Front Windshield (Soft Blue Glass) */}
-              <path d="M 62 135 C 75 125, 145 125, 158 135 C 152 165, 68 165, 62 135 Z" fill="#BFDBFE" stroke="#93C5FD" strokeWidth="1.5" />
-
-              {/* Rear Glass (Soft Blue Glass) */}
-              <path d="M 64 300 C 75 290, 145 290, 156 300 C 150 330, 70 330, 64 300 Z" fill="#BFDBFE" stroke="#93C5FD" strokeWidth="1.5" />
-
-              {/* Headlights (Soft Yellow) */}
-              <path d="M 58 35 C 70 32, 90 32, 92 40 L 54 44 Z" fill="#FDE68A" />
-              <path d="M 162 35 C 150 32, 130 32, 128 40 L 166 44 Z" fill="#FDE68A" />
-
-              {/* Taillights (Soft Red) */}
-              <path d="M 60 398 L 88 398 L 85 405 L 60 404 Z" fill="#FCA5A5" />
-              <path d="M 160 398 L 132 398 L 135 405 L 160 404 Z" fill="#FCA5A5" />
-
-              {/* Side Mirrors */}
-              <path d="M 40 135 C 34 135, 34 150, 48 150 L 48 142 Z" fill="#64748B" />
-              <path d="M 180 135 C 186 135, 186 150, 172 150 L 172 142 Z" fill="#64748B" />
-
-              {/* Dark Side Wheels & Hubcaps */}
-              <g fill="#475569">
-                <rect x="24" y="80" width="18" height="48" rx="6" />
-                <circle cx="42" cy="104" r="5" fill="#94A3B8" />
-                
-                <rect x="178" y="80" width="18" height="48" rx="6" />
-                <circle cx="178" cy="104" r="5" fill="#94A3B8" />
-                
-                <rect x="24" y="310" width="18" height="48" rx="6" />
-                <circle cx="42" cy="334" r="5" fill="#94A3B8" />
-                
-                <rect x="178" y="310" width="18" height="48" rx="6" />
-                <circle cx="178" cy="334" r="5" fill="#94A3B8" />
-              </g>
-
-              {/* Dash Cutlines */}
-              <path d="M 70 70 Q 110 58 150 70" stroke="#CBD5E1" strokeWidth="1.5" strokeDasharray="3 2" fill="none" />
-              <path d="M 70 365 Q 110 375 150 365" stroke="#CBD5E1" strokeWidth="1.5" strokeDasharray="3 2" fill="none" />
+              {/* Exact reference schematic rendered purely with vector SVG shapes */}
+              <VehicleBlueprintVectors />
 
               {/* Dynamic SVG Pin Markers - ALL 100% UNLOCKED */}
               {placedPins.map(({ item, idx, cx, cy }) => {
@@ -336,7 +362,7 @@ export default function UnlockedReport({
                   : item.severity === 'Moderate' 
                   ? '#E11D48' 
                   : isUncertain 
-                  ? '#64748B' 
+                  ? '#475569' 
                   : '#D97706';
 
                 return (
@@ -353,7 +379,7 @@ export default function UnlockedReport({
                         setActiveBoxModal({ item }); 
                       } 
                     }}
-                    className="cursor-pointer select-none transition-transform active:scale-95"
+                    className="cursor-pointer select-none group"
                     onClick={() => setActiveBoxModal({ item })}
                   >
                     <circle 
@@ -364,7 +390,8 @@ export default function UnlockedReport({
                       stroke="#FFFFFF" 
                       strokeWidth={isHovered ? "3" : "2.5"} 
                       strokeDasharray={isUncertain ? '3 2' : 'none'}
-                      className="drop-shadow-sm transition-all"
+                      filter="url(#unlocked-pin-shadow)"
+                      className="transition-all duration-150 group-hover:brightness-110"
                     />
                     <text 
                       x={cx} 
@@ -375,6 +402,7 @@ export default function UnlockedReport({
                       fontWeight="bold" 
                       textAnchor="middle" 
                       fontFamily="sans-serif"
+                      className="pointer-events-none select-none"
                     >
                       {idx + 1}
                     </text>
@@ -505,10 +533,11 @@ export default function UnlockedReport({
           <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
             <button
               type="button"
-              onClick={downloadPdf}
-              className="w-full sm:flex-1 h-12 bg-gradient-to-r from-[#022a5b] via-[#033c80] to-[#022a5b] hover:from-[#033c80] hover:to-[#044a9e] text-white font-extrabold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-[#022a5b]/20 transition-all active:scale-98"
+              onClick={handleDownloadPdf}
+              disabled={downloading}
+              className="w-full sm:flex-1 h-12 bg-gradient-to-r from-[#022a5b] via-[#033c80] to-[#022a5b] hover:from-[#033c80] hover:to-[#044a9e] text-white font-extrabold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-[#022a5b]/20 transition-all active:scale-98 disabled:opacity-50"
             >
-              <Download className="w-4 h-4 text-white" /> Download Official PDF Certificate
+              <Download className="w-4 h-4 text-white" /> {downloading ? 'Exporting...' : 'Download Official PDF Certificate'}
             </button>
             <button
               type="button"
