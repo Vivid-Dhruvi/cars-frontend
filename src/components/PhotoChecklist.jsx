@@ -197,11 +197,11 @@ export default function PhotoChecklist({
                 ) : (
                   <div className="relative flex flex-col bg-white overflow-hidden group">
                     {/* Top: Wireframe Sketch Outline using CSS */}
-                    <div className="relative h-32 sm:h-40 w-full overflow-hidden bg-slate-50 border-b border-slate-100 flex items-center justify-center">
+                    <div className="relative h-40 w-full overflow-hidden bg-slate-50 border-b border-slate-100 flex items-center justify-center">
                       <img 
                         src={getExampleImage(item.id)} 
                         alt={`Example ${item.title}`} 
-                        className="w-full h-full object-contain p-2 sm:p-4 mix-blend-multiply opacity-25 grayscale contrast-150 brightness-110 group-hover:opacity-40 transition-opacity duration-300" 
+                        className="w-full h-full object-contain scale-[1.15] sm:scale-100 sm:object-cover mix-blend-multiply opacity-25 grayscale contrast-150 brightness-110 group-hover:opacity-40 transition-opacity duration-300" 
                       />
                       {/* Subdued Outline Badge */}
                       <div className="absolute top-2 left-2 bg-white/80 backdrop-blur-sm border border-slate-200 text-slate-500 px-2 py-1 rounded text-[8px] font-bold uppercase tracking-wider">
