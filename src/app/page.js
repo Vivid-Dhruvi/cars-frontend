@@ -11,10 +11,10 @@ import InspectionLoader from '@/components/InspectionLoader';
 import { Camera, Cpu, Lock, FileCheck, Check } from 'lucide-react';
 
 const STEPS = [
-  { id: 'checklist', label: '1. Photo Capture', shortLabel: '1. Photos', icon: Camera, stepNum: '1' },
-  { id: 'results', label: '2. AI Analysis', shortLabel: '2. Analysis', icon: Cpu, stepNum: '2' },
-  { id: 'paywall', label: '3. Unlock Report', shortLabel: '3. Unlock', icon: Lock, stepNum: '3' },
-  { id: 'unlocked', label: '4. Official Certificate', shortLabel: '4. Certificate', icon: FileCheck, stepNum: '4' },
+  { id: 'checklist', label: 'Photo Capture', shortLabel: 'Photos', icon: Camera, stepNum: '1' },
+  { id: 'results', label: 'AI Analysis', shortLabel: 'Analysis', icon: Cpu, stepNum: '2' },
+  { id: 'paywall', label: 'Unlock Report', shortLabel: 'Unlock', icon: Lock, stepNum: '3' },
+  { id: 'unlocked', label: 'Official Certificate', shortLabel: 'Certificate', icon: FileCheck, stepNum: '4' },
 ];
 
 export default function App() {

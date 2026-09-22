@@ -82,28 +82,46 @@ function getResolvedCarPins(findings) {
     const damageType = (item.damage_type || '').toLowerCase();
     const suppImg = item.supporting_images?.[0] || 'IMAGE_01';
     
-    // Extract normalized bounding box center X (0 to 1000)
+    // Extract normalized bounding box center X and Y (0 to 1000)
     const box = item.bounding_boxes?.[0]?.box;
     let boxXCenter = 500;
+    let boxYCenter = 500;
     if (box && box.length === 4) {
       boxXCenter = (box[1] + box[3]) / 2;
+      boxYCenter = (box[0] + box[2]) / 2;
     }
 
-    // Check explicit side keywords
-    const isExplicitLeft = part.includes('left') || desc.includes('left') || damageType.includes('left') || part.includes('driver');
-    const isExplicitRight = part.includes('right') || desc.includes('right') || damageType.includes('right') || part.includes('passenger');
-
     let side = 'center';
-    if (isExplicitLeft) side = 'left';
-    else if (isExplicitRight) side = 'right';
-    else {
-      if (suppImg === 'IMAGE_01' || part.includes('front')) {
-        if (boxXCenter < 480) side = 'right';
-        else if (boxXCenter > 520) side = 'left';
-      } else if (suppImg === 'IMAGE_02' || suppImg === 'IMAGE_03' || part.includes('rear')) {
-        if (boxXCenter < 480) side = 'left';
-        else if (boxXCenter > 520) side = 'right';
+    let hasVisualSide = false;
+
+    // Use visual ground truth (bounding box) if available, but determine perspective based purely on the semantic part name, not suppImg
+    if (box && box.length === 4) {
+      // Strictly identify parts that are on the direct front or rear face of the vehicle.
+      // Exclude parts that are on the side but contain 'front'/'rear' in their name (e.g. "front door", "rear wheel", "quarter panel").
+      const isSidePart = part.includes('door') || part.includes('wheel') || part.includes('tire') || part.includes('rim') || part.includes('mirror') || part.includes('fender') || part.includes('quarter_panel') || part.includes('corner');
+      
+      const partIsRear = !isSidePart && (part.includes('rear_bumper') || part.includes('tailgate') || part.includes('trunk') || part.includes('boot') || part.includes('taillight') || part.includes('exhaust') || part.includes('rear_windshield'));
+      const partIsFront = !isSidePart && (part.includes('front_bumper') || part.includes('grille') || part.includes('headlight') || part.includes('windshield') || part.includes('hood'));
+      
+      // If we know we are looking at the front of the car
+      if (partIsFront) {
+        if (boxXCenter < 450) { side = 'right'; hasVisualSide = true; } // Viewer left = Car right
+        else if (boxXCenter > 550) { side = 'left'; hasVisualSide = true; } // Viewer right = Car left
+      } 
+      // If we know we are looking at the rear of the car
+      else if (partIsRear) {
+        if (boxXCenter < 450) { side = 'left'; hasVisualSide = true; } // Viewer left = Car left
+        else if (boxXCenter > 550) { side = 'right'; hasVisualSide = true; } // Viewer right = Car right
       }
+    }
+    
+    // Fallback to explicit text keywords if visual side couldn't be determined (e.g. side profile photos or center damage)
+    if (!hasVisualSide) {
+      const isExplicitLeft = part.includes('left') || desc.includes('left') || damageType.includes('left') || part.includes('driver');
+      const isExplicitRight = part.includes('right') || desc.includes('right') || damageType.includes('right') || part.includes('passenger');
+      
+      if (isExplicitLeft) side = 'left';
+      else if (isExplicitRight) side = 'right';
     }
 
     // ════════════════════════════════════════════════════════════════════════════
@@ -118,49 +136,87 @@ function getResolvedCarPins(findings) {
     let cx = 220;
     let cy = 275;
 
+    // We introduce dynamic bounding-box interpolation to give the pins a precise, non-static position based on where the visual damage was detected
+    const applyDynamicOffset = (baseX, baseY, minX, maxX, minY, maxY, invertX = false, invertY = false) => {
+      if (!box || box.length !== 4) return { cx: baseX, cy: baseY };
+      
+      let effectiveMinX = minX;
+      let effectiveMaxX = maxX;
+      
+      // If the part spans the width of the car (crosses center 220), constrain interpolation to the correct semantic side
+      // This prevents close-up photos of one half from mapping to the wrong half of the blueprint
+      if (minX < 220 && maxX > 220) {
+        const midX = (minX + maxX) / 2;
+        if (side === 'left') {
+          effectiveMaxX = midX;
+        } else if (side === 'right') {
+          effectiveMinX = midX;
+        }
+      }
+      
+      // Calculate normalized ratio (0.0 to 1.0)
+      const ratioX = invertX ? (1000 - boxXCenter) / 1000 : boxXCenter / 1000;
+      const ratioY = invertY ? (1000 - boxYCenter) / 1000 : boxYCenter / 1000;
+      
+      const newCx = effectiveMinX + ratioX * (effectiveMaxX - effectiveMinX);
+      const newCy = minY + ratioY * (maxY - minY);
+      
+      return { cx: newCx, cy: newCy };
+    };
+
     // --- Front bumper / grille / headlights / front corners ---
     if (part.includes('front_bumper') || part.includes('grille') || part.includes('headlight') || (part.includes('front') && part.includes('corner'))) {
-      cy = 60;
-      cx = side === 'left' ? 168 : side === 'right' ? 272 : 220;
+      const base = { cx: side === 'left' ? 168 : side === 'right' ? 272 : 220, cy: 60 };
+      const dyn = applyDynamicOffset(base.cx, base.cy, 144, 296, 16, 80, true, false); // Invert X for front-facing camera
+      cx = dyn.cx; cy = dyn.cy;
 
     // --- Rear bumper / taillights / exhaust / rear corners ---
     } else if (part.includes('rear_bumper') || part.includes('taillight') || part.includes('exhaust') || (part.includes('rear') && part.includes('corner'))) {
-      cy = 490;
-      cx = side === 'left' ? 169 : side === 'right' ? 271 : 220;
+      const base = { cx: side === 'left' ? 169 : side === 'right' ? 271 : 220, cy: 490 };
+      const dyn = applyDynamicOffset(base.cx, base.cy, 144, 296, 460, 536, false, false);
+      cx = dyn.cx; cy = dyn.cy;
 
     // --- Hood / bonnet / cowl (center body top) ---
     } else if (part.includes('hood') || part.includes('bonnet') || part.includes('cowl')) {
-      cy = 135;
-      cx = side === 'left' ? 195 : side === 'right' ? 245 : 220;
+      const base = { cx: side === 'left' ? 195 : side === 'right' ? 245 : 220, cy: 135 };
+      const dyn = applyDynamicOffset(base.cx, base.cy, 152, 288, 95, 180, true, true);
+      cx = dyn.cx; cy = dyn.cy;
 
     // --- Front windshield ---
     } else if (part.includes('windshield') && !part.includes('rear')) {
-      cy = 195;
-      cx = side === 'left' ? 200 : side === 'right' ? 240 : 220;
+      const base = { cx: side === 'left' ? 200 : side === 'right' ? 240 : 220, cy: 195 };
+      const dyn = applyDynamicOffset(base.cx, base.cy, 160, 280, 180, 215, true, false);
+      cx = dyn.cx; cy = dyn.cy;
 
     // --- Rear windshield ---
     } else if (part.includes('rear_windshield')) {
-      cy = 352;
-      cx = side === 'left' ? 200 : side === 'right' ? 240 : 220;
+      const base = { cx: side === 'left' ? 200 : side === 'right' ? 240 : 220, cy: 352 };
+      const dyn = applyDynamicOffset(base.cx, base.cy, 160, 280, 335, 380, false, false);
+      cx = dyn.cx; cy = dyn.cy;
 
     // --- Trunk / tailgate / boot ---
     } else if (part.includes('trunk') || part.includes('tailgate') || part.includes('boot')) {
-      cy = 410;
-      cx = side === 'left' ? 195 : side === 'right' ? 245 : 220;
+      const base = { cx: side === 'left' ? 195 : side === 'right' ? 245 : 220, cy: 410 };
+      const dyn = applyDynamicOffset(base.cx, base.cy, 152, 288, 380, 445, false, false);
+      cx = dyn.cx; cy = dyn.cy;
 
     // --- Roof (center body) ---
     } else if (part.includes('roof')) {
-      cy = 275;
-      cx = side === 'left' ? 198 : side === 'right' ? 242 : 220;
+      const base = { cx: side === 'left' ? 198 : side === 'right' ? 242 : 220, cy: 275 };
+      const dyn = applyDynamicOffset(base.cx, base.cy, 152, 288, 215, 335, false, false);
+      cx = dyn.cx; cy = dyn.cy;
 
     // --- Quarter panel / fender → unfolded side panels ---
     } else if (part.includes('quarter_panel') || part.includes('fender')) {
       if (part.includes('front')) {
-        cy = 118;
-        cx = side === 'right' ? 345 : 95;
+        const base = { cx: side === 'right' ? 345 : 95, cy: 118 };
+        // For side profile, Y is along the car length, X is vertical height of panel
+        const dyn = applyDynamicOffset(base.cx, base.cy, side === 'right' ? 338 : 56, side === 'right' ? 384 : 102, 95, 150, side === 'right', false);
+        cx = dyn.cx; cy = dyn.cy;
       } else {
-        cy = 422;
-        cx = side === 'right' ? 345 : 95;
+        const base = { cx: side === 'right' ? 345 : 95, cy: 422 };
+        const dyn = applyDynamicOffset(base.cx, base.cy, side === 'right' ? 338 : 56, side === 'right' ? 384 : 102, 380, 445, side === 'right', false);
+        cx = dyn.cx; cy = dyn.cy;
       }
 
     // --- Doors → unfolded side panels (clearly separated from roof at x=220) ---
@@ -169,19 +225,19 @@ function getResolvedCarPins(findings) {
       const descHasFront = desc.includes('front') && !descHasRear;
       const partHasRear = part.includes('rear') || part.includes('back');
       const partHasFront = part.includes('front');
-
-      // For side profile photos (IMAGE_04 driver side):
-      // front door is left (boxXCenter < 520), rear door is right (boxXCenter > 520)
       const boxImpliesRear = (suppImg === 'IMAGE_04' && boxXCenter > 520) || suppImg === 'IMAGE_05' || suppImg === 'IMAGE_08';
-
       const isRear = partHasRear || descHasRear || (!partHasFront && !descHasFront && boxImpliesRear);
 
       if (isRear) {
-        cy = 320; // Center of rear door (between B-pillar y=273 and rear wheel arch y=372)
-        cx = side === 'right' ? 338 : 102;
+        const base = { cx: side === 'right' ? 338 : 102, cy: 320 };
+        // Y length 273 to 372
+        const dyn = applyDynamicOffset(base.cx, base.cy, side === 'right' ? 338 : 56, side === 'right' ? 384 : 102, 273, 372, side === 'right', false);
+        cx = dyn.cx; cy = dyn.cy;
       } else {
-        cy = 225; // Center of front door (between front wheel arch y=168 and B-pillar y=273)
-        cx = side === 'right' ? 338 : 102;
+        const base = { cx: side === 'right' ? 338 : 102, cy: 225 };
+        // Y length 168 to 273
+        const dyn = applyDynamicOffset(base.cx, base.cy, side === 'right' ? 338 : 56, side === 'right' ? 384 : 102, 168, 273, side === 'right', false);
+        cx = dyn.cx; cy = dyn.cy;
       }
 
     // --- Wheels / rims / tires → at outer wheel arches on side panels ---
@@ -193,6 +249,7 @@ function getResolvedCarPins(findings) {
         cx = side === 'right' ? 384 : 56;
         cy = 395;
       }
+      // Keep wheels mostly static to avoid pins floating outside the wheel arch
 
     // --- Side mirrors ---
     } else if (part.includes('mirror')) {

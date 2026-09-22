@@ -43,19 +43,8 @@ export default function Header({ setCurrentStep, currentStep }) {
         </div>
       </button>
 
-      {/* Right side live status & protocol badge */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#022a5b]/5 border border-[#022a5b]/15 text-[#022a5b] text-xs font-medium">
-          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span className="text-[#022a5b] font-semibold text-xs">AI Vision Ready</span>
-        </div>
-
-        <span className="text-[11px] sm:text-xs font-semibold text-[#022a5b] bg-[#022a5b]/5 px-2.5 sm:px-3.5 py-1.5 rounded-xl border border-[#022a5b]/15 flex items-center gap-1.5 shrink-0">
-          <ShieldCheck className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-[#022a5b]" />
-          <span className="hidden sm:inline">Inspection Protocol</span>
-          <span className="inline sm:hidden">Protocol</span>
-        </span>
-      </div>
+      {/* Right side area empty */}
+      <div></div>
     </header>
   );
 }

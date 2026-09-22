@@ -73,7 +73,7 @@ export default function InspectionLoader({ type = 'ai_inspection', vehicleData =
         {/* Live Status Pill */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#022a5b]/8 border border-[#022a5b]/20 text-[#022a5b] text-xs font-extrabold tracking-wide mb-2.5">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>{type === 'payment_verification' ? 'Securing Transaction Clearance' : 'AI Multi-Angle Computer Vision'}</span>
+          <span>{type === 'payment_verification' ? 'Securing Transaction Clearance' : 'AI Analysis'}</span>
         </div>
 
         <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
@@ -156,15 +156,6 @@ export default function InspectionLoader({ type = 'ai_inspection', vehicleData =
         })}
       </div>
 
-      {/* Trust & Security Footer */}
-      <div className="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-2">
-        <span className="flex items-center gap-1.5 font-medium">
-          <ShieldCheck className="w-4 h-4 text-emerald-600" /> 256-Bit Encrypted Protocol
-        </span>
-        <span className="font-bold text-[#022a5b]">
-          Estimated: ~{secondsRemaining}s remaining
-        </span>
-      </div>
     </div>
   );
 }

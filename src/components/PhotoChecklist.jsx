@@ -204,8 +204,8 @@ export default function PhotoChecklist({
                         className="w-[120%] h-[120%] object-cover mix-blend-multiply opacity-25 grayscale contrast-150 brightness-110 group-hover:opacity-40 transition-opacity duration-300" 
                       />
                       {/* Subdued Outline Badge */}
-                      <div className="absolute top-2 left-2 bg-white/80 backdrop-blur-sm border border-slate-200 text-slate-500 px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider">
-                        Outline Guide
+                      <div className="absolute top-2 left-2 bg-white/80 backdrop-blur-sm border border-slate-200 text-slate-500 px-2 py-1 rounded text-[8px] font-bold uppercase tracking-wider">
+                        Expected Angle
                       </div>
                     </div>
                     
