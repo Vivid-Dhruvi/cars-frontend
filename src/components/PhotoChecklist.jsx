@@ -201,7 +201,7 @@ export default function PhotoChecklist({
                       <img 
                         src={getExampleImage(item.id)} 
                         alt={`Example ${item.title}`} 
-                        className="w-[120%] h-[120%] object-cover mix-blend-multiply opacity-25 grayscale contrast-150 brightness-110 group-hover:opacity-40 transition-opacity duration-300" 
+                        className="w-full h-full object-contain p-2 sm:p-4 mix-blend-multiply opacity-25 grayscale contrast-150 brightness-110 group-hover:opacity-40 transition-opacity duration-300" 
                       />
                       {/* Subdued Outline Badge */}
                       <div className="absolute top-2 left-2 bg-white/80 backdrop-blur-sm border border-slate-200 text-slate-500 px-2 py-1 rounded text-[8px] font-bold uppercase tracking-wider">

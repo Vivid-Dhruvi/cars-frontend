@@ -45,7 +45,7 @@ export default function InspectionLoader({ type = 'ai_inspection', vehicleData =
   }, [stages.length]);
 
   return (
-    <div className="w-full max-w-xl mx-auto my-6 p-6 sm:p-8 bg-white rounded-3xl border border-slate-200/90 shadow-lg relative overflow-hidden isolate animate-in fade-in duration-300">
+    <div className="w-full max-w-xl mx-auto mt-2 mb-8 p-6 sm:p-8 bg-white rounded-3xl border border-slate-200/90 shadow-lg relative overflow-hidden isolate animate-in fade-in duration-300">
       {/* Background ambient lighting */}
       <div className="absolute top-0 right-0 w-36 h-36 bg-[#022a5b]/8 rounded-full blur-2xl pointer-events-none translate-x-1/4 -translate-y-1/4" />
       <div className="absolute bottom-0 left-0 w-36 h-36 bg-blue-400/8 rounded-full blur-2xl pointer-events-none -translate-x-1/4 translate-y-1/4" />

@@ -554,10 +554,15 @@ export default function UnlockedReport({
 
           {/* Verification Audit Badge */}
           <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-600 mt-1">
-            <span className="min-w-0 wrap-anywhere font-medium flex items-center gap-2">
-              <Key className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span>Digital SHA-256 Hash: <code className="bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-800 font-mono text-[11px]">{analysisResults?.sha256_hash || 'sha256-verified-e8f9a201b49912c3'}</code></span>
-            </span>
+            <div className="min-w-0 font-medium flex items-start gap-2 w-full sm:w-auto">
+              <Key className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+              <div className="flex flex-col gap-1.5 w-full min-w-0">
+                <span className="text-slate-500">Digital SHA-256 Hash:</span> 
+                <code className="bg-white px-2 py-1.5 rounded-lg border border-slate-200 text-slate-800 font-mono text-[10px] break-all leading-relaxed whitespace-pre-wrap">
+                  {analysisResults?.sha256_hash || 'sha256-verified-e8f9a201b49912c3'}
+                </code>
+              </div>
+            </div>
             <span className="text-emerald-700 font-bold flex items-center gap-1.5 shrink-0 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
               <span>Signed Record</span>
