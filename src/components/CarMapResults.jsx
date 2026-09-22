@@ -491,7 +491,6 @@ export default function CarMapResults({
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-600 inline-block shrink-0"></span> Severe</span>
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-slate-500 inline-block shrink-0"></span> Uncertain</span>
             </div>
-            <span className="font-bold text-slate-800 text-[11px] sm:text-xs shrink-0 self-end sm:self-auto">{vehicleData?.makeModel || 'Vehicle'} • {vehicleData?.plateNumber || 'ID-123'}</span>
           </div>
         </div>
 
