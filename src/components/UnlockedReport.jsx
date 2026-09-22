@@ -36,8 +36,32 @@ const getSanitizedVehiclePart = (item) => {
     return 'Windshield & Hood';
   }
 
+  // Check bounding box and description to distinguish front vs rear door on side views
+  const desc = (item?.description || '').toLowerCase();
+  const currentPart = (item?.vehicle_part || '').toLowerCase();
+  const box = item?.bounding_boxes?.[0]?.box;
+  let boxXCenter = 500;
+  if (box && box.length === 4) {
+    boxXCenter = (box[1] + box[3]) / 2;
+  }
+
+  const isRearDoor = 
+    currentPart.includes('rear') || 
+    currentPart.includes('back') || 
+    desc.includes('rear') || 
+    desc.includes('back') || 
+    (desc.includes('passenger door') && !desc.includes('front passenger')) ||
+    (paddedKey === 'IMAGE_04' && boxXCenter > 520);
+
+  if (paddedKey === 'IMAGE_04' || currentPart.includes('driver_door')) {
+    return isRearDoor ? 'Driver Rear Door' : 'Driver Front Door';
+  }
+
+  if (paddedKey === 'IMAGE_09' || currentPart.includes('passenger_door')) {
+    return isRearDoor ? 'Passenger Rear Door' : 'Passenger Front Door';
+  }
+
   if (paddedNum < 11) {
-    const currentPart = (item?.vehicle_part || '').toLowerCase();
     if (currentPart.includes('wheel') || currentPart.includes('rim')) {
       return ANGLE_LABEL_MAP[paddedKey] || 'Vehicle Panel';
     }
@@ -140,12 +164,23 @@ function getResolvedCarPins(findings) {
       }
 
     // --- Doors → unfolded side panels (clearly separated from roof at x=220) ---
-    } else if (part.includes('door')) {
-      if (part.includes('rear')) {
-        cy = 315;
+    } else if (part.includes('door') || desc.includes('door')) {
+      const descHasRear = desc.includes('rear') || desc.includes('back') || (desc.includes('passenger door') && !desc.includes('front'));
+      const descHasFront = desc.includes('front') && !descHasRear;
+      const partHasRear = part.includes('rear') || part.includes('back');
+      const partHasFront = part.includes('front');
+
+      // For side profile photos (IMAGE_04 driver side):
+      // front door is left (boxXCenter < 520), rear door is right (boxXCenter > 520)
+      const boxImpliesRear = (suppImg === 'IMAGE_04' && boxXCenter > 520) || suppImg === 'IMAGE_05' || suppImg === 'IMAGE_08';
+
+      const isRear = partHasRear || descHasRear || (!partHasFront && !descHasFront && boxImpliesRear);
+
+      if (isRear) {
+        cy = 320; // Center of rear door (between B-pillar y=273 and rear wheel arch y=372)
         cx = side === 'right' ? 338 : 102;
       } else {
-        cy = 230;
+        cy = 225; // Center of front door (between front wheel arch y=168 and B-pillar y=273)
         cx = side === 'right' ? 338 : 102;
       }
 
