@@ -138,12 +138,12 @@ export default function PhotoChecklist({
             return (
               <div
                 key={item.id}
-                className={`rounded-2xl overflow-hidden border flex flex-col min-h-64 relative transition-all ${
+                className={`rounded-2xl overflow-hidden border flex flex-col min-h-64 relative transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
                   captured
-                    ? 'border-[#022a5b]/40 bg-white shadow-xs ring-1 ring-[#022a5b]/10'
+                    ? 'border-[#022a5b]/40 bg-white shadow-xs ring-1 ring-[#022a5b]/10 hover:shadow-lg'
                     : item.isWheel
-                    ? 'border-indigo-100 bg-indigo-50/20 hover:border-[#022a5b]/40'
-                    : 'border-slate-200 bg-slate-50/70 hover:border-[#022a5b]/40'
+                    ? 'border-indigo-100 bg-indigo-50/20 hover:border-[#022a5b]/40 hover:bg-white hover:shadow-md'
+                    : 'border-slate-200 bg-slate-50/70 hover:border-[#022a5b]/40 hover:bg-white hover:shadow-md'
                 }`}
               >
                 {/* Hidden file inputs */}
