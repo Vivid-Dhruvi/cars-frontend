@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, FileText } from 'lucide-react';
 
 export default function Header({ setCurrentStep, currentStep }) {
   const handleLogoClick = () => {
@@ -37,8 +37,17 @@ export default function Header({ setCurrentStep, currentStep }) {
         </span>
       </button>
 
-      {/* Right side area empty (Free Tool badge removed per user request) */}
-      <div></div>
+      {/* Right side: Reports Log Link */}
+      <div className="flex items-center gap-2">
+        <a 
+          href="/admin" 
+          className="text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 shrink-0"
+          title="View all generated inspection reports"
+        >
+          <FileText className="w-3.5 h-3.5 text-slate-500" />
+          <span className="hidden sm:inline">Reports Log</span>
+        </a>
+      </div>
     </header>
   );
 }
