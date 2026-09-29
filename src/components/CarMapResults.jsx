@@ -225,7 +225,11 @@ function getResolvedCarPins(findings) {
       const descHasFront = desc.includes('front') && !descHasRear;
       const partHasRear = part.includes('rear') || part.includes('back');
       const partHasFront = part.includes('front');
+
+      // For side profile photos (IMAGE_04 driver side):
+      // front door is left (boxXCenter < 520), rear door is right (boxXCenter > 520)
       const boxImpliesRear = (suppImg === 'IMAGE_04' && boxXCenter > 520) || suppImg === 'IMAGE_05' || suppImg === 'IMAGE_08';
+
       const isRear = partHasRear || descHasRear || (!partHasFront && !descHasFront && boxImpliesRear);
 
       if (isRear) {
@@ -316,11 +320,14 @@ function getResolvedCarPins(findings) {
 
 export default function CarMapResults({ 
   vehicleData, 
+  userInfo,
   analysisResults,
+  activeInspectionId,
   photos,
   setCurrentStep,
   handleStartNewScan
 }) {
+  const [downloading, setDownloading] = React.useState(false);
   const findings = React.useMemo(() => {
     const raw = analysisResults?.findings || [];
     const uncertain = (analysisResults?.uncertain_findings || []).map((uf, i) => ({
@@ -340,6 +347,47 @@ export default function CarMapResults({
       ? photos
       : (analysisResults?.photos || {});
   }, [photos, analysisResults]);
+
+  const handleDownloadPdf = async () => {
+    try {
+      setDownloading(true);
+      toast.info('Generating official certified PDF report...');
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${API_BASE}/api/report/pdf`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vehicleData, analysisResults, photos: activePhotos, userInfo })
+      });
+
+      if (!response.ok) {
+        throw new Error(`PDF generation failed: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const cleanMake = (vehicleData?.makeModel || 'vehicle').replace(/\s+/g, '_');
+      const plate = (vehicleData?.plateNumber || 'report').replace(/\s+/g, '_');
+      a.download = `carinsurent-damage-certificate-${cleanMake}-${plate}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success('Official certified PDF report downloaded!');
+    } catch (err) {
+      console.error('PDF Download Error:', err);
+      toast.error('Failed to generate PDF. Retrying via alternate stream...');
+      const inspId = analysisResults?.inspection_id || activeInspectionId;
+      if (inspId) {
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        window.open(`${API_BASE}/api/reports/${inspId}/pdf`, '_blank');
+      }
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -367,20 +415,23 @@ export default function CarMapResults({
               Inspection Results & Visual Map
             </h2>
             <p className="text-xs text-slate-500">
-              {findings.length === 0 ? 'No damage detected' : `${findings.length} visual finding${findings.length !== 1 ? 's' : ''} detected by Gemini Vision AI`}
+              {findings.length === 0 ? 'No damage detected' : `${findings.length} visual finding${findings.length !== 1 ? 's' : ''} detected by CarInsuRent Rental Car Damage Detecting Tool`}
             </p>
           </div>
         </div>
 
-        <span className={`self-start sm:self-auto text-xs font-semibold px-3 py-1 rounded-full border shrink-0 ${
-          findings.length === 0 
-            ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
-            : 'bg-[#022a5b]/10 text-[#022a5b] border-[#022a5b]/20 font-bold'
-        }`}>
-          {findings.length === 0 
-            ? '✓ 0 Defects · Clean Vehicle' 
-            : `Preliminary: ${Math.min(3, findings.length)} of ${findings.length} finding${findings.length !== 1 ? 's' : ''} shown`}
-        </span>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={handleDownloadPdf}
+            disabled={downloading}
+            className="px-3.5 sm:px-4 py-2 bg-[#022a5b] hover:bg-[#033b7e] text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-2 disabled:opacity-50 cursor-pointer shrink-0"
+          >
+            <Download className="w-3.5 h-3.5 shrink-0" />
+            <span className="hidden sm:inline">{downloading ? 'Exporting...' : 'Download PDF Certificate'}</span>
+            <span className="inline sm:hidden">{downloading ? 'Exporting...' : 'Download PDF'}</span>
+          </button>
+        </div>
       </div>
 
       {/* 2-Column Grid */}
@@ -573,10 +624,10 @@ export default function CarMapResults({
           ) : (
             <>
               <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Detected Damage Points ({Math.min(3, findings.length)} of {findings.length} shown)
+                Detected Damage Points ({findings.length} visual finding{findings.length !== 1 ? 's' : ''} detected)
               </h3>
 
-              {findings.slice(0, 3).map((item, idx) => {
+              {findings.map((item, idx) => {
                 const displaySrc = getFindingEvidence(item, activePhotos).src;
                 const confidencePct = Math.round((item.confidence ?? 0.92) * 100);
 
@@ -645,37 +696,52 @@ export default function CarMapResults({
                 );
               })}
 
-              {/* Clean #022a5b Paywall CTA Card */}
+              {/* Clean #022a5b Free Inspection Certificate CTA Card */}
               <div className="bg-gradient-to-br from-[#022a5b]/8 via-white to-[#022a5b]/12 text-slate-900 rounded-3xl p-5 sm:p-7 shadow-xs flex flex-col gap-4 border border-[#022a5b]/20 relative overflow-hidden">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="w-4 h-1 bg-[#022a5b] rounded-full inline-block shrink-0"></span>
                     <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#022a5b]">
-                      Official PDF Certificate
+                      Official Certified Report
                     </span>
                   </div>
-                  <span className="text-[11px] sm:text-xs font-bold text-slate-600 bg-white px-2.5 py-0.5 rounded-full border border-slate-200 shadow-2xs shrink-0">
-                    One-Time Unlock
+                  <span className="text-[11px] sm:text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 shadow-2xs shrink-0">
+                    100% Free · Verified
                   </span>
                 </div>
 
                 <div>
                   <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">
-                    Unlock Complete Vehicle Inspection <span className="text-[#022a5b]">Report</span>
+                    Complete Vehicle Inspection <span className="text-[#022a5b]">Certificate</span>
                   </h3>
                   <p className="text-slate-600 text-xs sm:text-sm mt-1 leading-relaxed">
-                    Gain full access to all {findings.length} findings, high-resolution bounding boxes, damage descriptions, and official cryptographic PDF certificate.
+                    Gain full access to all {findings.length} cataloged findings, high-resolution bounding boxes, complete vehicle blueprint, and official cryptographic PDF certificate.
                   </p>
                 </div>
 
-                <button 
-                  onClick={() => setCurrentStep('paywall')}
-                  className="w-full h-13 bg-gradient-to-r from-[#022a5b] via-[#033c80] to-[#022a5b] hover:from-[#033c80] hover:to-[#022a5b] text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2.5 shadow-md shadow-[#022a5b]/20 transition-all cursor-pointer active:scale-98"
-                >
-                  <Lock className="w-4 h-4 text-white" />
-                  <span>Unlock Full Report for $3.00</span>
-                  <ArrowRight className="w-4 h-4 text-white" />
-                </button>
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                  <button 
+                    onClick={handleDownloadPdf}
+                    disabled={downloading}
+                    className="w-full sm:flex-1 min-h-12 sm:h-13 px-4 py-2.5 bg-gradient-to-r from-[#022a5b] via-[#033c80] to-[#022a5b] hover:from-[#033c80] hover:to-[#022a5b] text-white font-bold text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-[#022a5b]/20 transition-all cursor-pointer active:scale-98 disabled:opacity-50"
+                  >
+                    <Download className="w-4 h-4 text-white shrink-0" />
+                    <span>{downloading ? 'Exporting PDF...' : 'Download Official PDF Certificate'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (handleStartNewScan) {
+                        handleStartNewScan();
+                      } else {
+                        setCurrentStep('checklist');
+                      }
+                    }}
+                    className="w-full sm:w-auto min-h-12 sm:h-13 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                  >
+                    <RotateCcw className="w-4 h-4" /> Start New Scan
+                  </button>
+                </div>
               </div>
             </>
           )}

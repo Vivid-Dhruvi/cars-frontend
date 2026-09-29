@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle2, Download, Scan, ShieldCheck, RotateCcw, Car, Key } from 'lucide-react';
+import { CheckCircle2, Download, Scan, ShieldCheck, RotateCcw, Car, Key, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
 import DamagePhotoDialog from './DamagePhotoDialog';
@@ -264,7 +264,8 @@ export default function UnlockedReport({
   activeInspectionId,
   photos, 
   onBack,
-  onReset 
+  onReset,
+  handleStartNewScan
 }) {
   const [activeBoxModal, setActiveBoxModal] = React.useState(null);
   const [downloading, setDownloading] = React.useState(false);
@@ -308,7 +309,7 @@ export default function UnlockedReport({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `CarsInsure-Certificate-${vehicleData?.plateNumber || 'ID-123'}.pdf`;
+      a.download = `CarInsuRent-Certificate-${vehicleData?.plateNumber || 'ID-123'}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -333,6 +334,35 @@ export default function UnlockedReport({
         />
       )}
 
+      {/* Top Header Navigation (Grey / White Client-Requested Header Card) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+        <div className="flex items-center gap-3">
+          {onBack && (
+            <button 
+              aria-label="Back to photo checklist" 
+              onClick={onBack} 
+              className="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer shrink-0"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          )}
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
+              Inspection Results & Visual Map
+            </h2>
+            <p className="text-xs text-slate-500">
+              {findings.length === 0 ? 'No damage detected' : `${findings.length} visual finding${findings.length !== 1 ? 's' : ''} detected by CarInsuRent Rental Car Damage Detecting Tool`}
+            </p>
+          </div>
+        </div>
+
+        <span className="self-start sm:self-auto text-xs font-semibold px-3 py-1 rounded-full border shrink-0 bg-slate-100 text-slate-700 border-slate-200">
+          {findings.length === 0 
+            ? '✓ 0 Defects · Clean Vehicle' 
+            : `${findings.length} of ${findings.length} findings shown`}
+        </span>
+      </div>
+
       {/* Top Banner: Unlocked State Notification */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-2xl">
         <div className="flex items-center gap-3">
@@ -340,21 +370,38 @@ export default function UnlockedReport({
             <CheckCircle2 className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-slate-900 text-sm sm:text-base">Comprehensive Report Unlocked</h3>
+            <h3 className="font-bold text-slate-900 text-sm sm:text-base">Comprehensive Inspection Certificate</h3>
             <p className="text-xs text-slate-600">
-              All {findings.length} findings, bounding coordinates, and certified export tools are activated.
+              {findings.length === 0 ? 'No damage detected' : `${findings.length} visual finding${findings.length !== 1 ? 's' : ''} detected by CarInsuRent Rental Car Damage Detecting Tool.`}
+              {userInfo?.email && (
+                <span className="block mt-1 font-semibold text-emerald-800">
+                  ✉️ A signed copy has also been dispatched to <u>{userInfo.email}</u>.
+                </span>
+              )}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
+          {/* {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="px-3 sm:px-3.5 py-2 bg-white text-slate-700 border border-slate-200 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+              title="Back to photo checklist"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 shrink-0 text-slate-600" />
+              <span>Photos</span>
+            </button>
+          )} */}
           <button
             onClick={handleDownloadPdf}
             disabled={downloading}
-            className="px-4 py-2 bg-[#022a5b] text-white rounded-xl text-xs font-bold hover:bg-[#022a5b]/90 transition-all shadow-xs flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+            className="px-3.5 sm:px-4 py-2 bg-[#022a5b] text-white rounded-xl text-xs font-bold hover:bg-[#022a5b]/90 transition-all shadow-xs flex items-center gap-2 disabled:opacity-50 cursor-pointer shrink-0"
           >
-            <Download className="w-3.5 h-3.5" />
-            {downloading ? 'Exporting...' : 'Download PDF Certificate'}
+            <Download className="w-3.5 h-3.5 shrink-0" />
+            <span className="hidden sm:inline">{downloading ? 'Exporting...' : 'Download PDF Certificate'}</span>
+            <span className="inline sm:hidden">{downloading ? 'Exporting...' : 'Download PDF'}</span>
           </button>
         </div>
       </div>
@@ -581,17 +628,23 @@ export default function UnlockedReport({
             <button
               type="button"
               onClick={() => {
-                try {
-                  localStorage.removeItem('carsinsure_step');
-                  localStorage.removeItem('carsinsure_active_inspection_id');
-                  localStorage.removeItem('carsinsure_analysis_results');
-                  localStorage.removeItem('carsinsure_photos');
-                  localStorage.removeItem('carsinsure_vehicle_data');
-                  localStorage.removeItem('carsinsure_pending_inspection_id');
-                  localStorage.removeItem('carsinsure_user_name');
-                  localStorage.removeItem('carsinsure_user_email');
-                } catch (e) {}
-                window.location.href = '/';
+                if (handleStartNewScan) {
+                  handleStartNewScan();
+                } else if (onReset) {
+                  onReset();
+                } else {
+                  try {
+                    localStorage.removeItem('carsinsure_step');
+                    localStorage.removeItem('carsinsure_active_inspection_id');
+                    localStorage.removeItem('carsinsure_analysis_results');
+                    localStorage.removeItem('carsinsure_photos');
+                    localStorage.removeItem('carsinsure_vehicle_data');
+                    localStorage.removeItem('carsinsure_pending_inspection_id');
+                    localStorage.removeItem('carsinsure_user_name');
+                    localStorage.removeItem('carsinsure_user_email');
+                  } catch (e) {}
+                  window.location.href = '/';
+                }
               }}
               className="w-full sm:w-auto h-12 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors"
             >

@@ -3,19 +3,27 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
-import PhotoChecklist from '@/components/PhotoChecklist';
+import PhotoChecklist, { leadFormSchema } from '@/components/PhotoChecklist';
 import CarMapResults from '@/components/CarMapResults';
 import PaywallForm from '@/components/PaywallForm';
 import UnlockedReport from '@/components/UnlockedReport';
 import InspectionLoader from '@/components/InspectionLoader';
 import { Camera, Cpu, Lock, FileCheck, Check } from 'lucide-react';
 
+// Active: 2-step free flow
 const STEPS = [
-  { id: 'checklist', label: 'Photo Capture', shortLabel: 'Photos', icon: Camera, stepNum: '1' },
-  { id: 'results', label: 'AI Analysis', shortLabel: 'Analysis', icon: Cpu, stepNum: '2' },
-  { id: 'paywall', label: 'Unlock Report', shortLabel: 'Unlock', icon: Lock, stepNum: '3' },
-  { id: 'unlocked', label: 'Official Certificate', shortLabel: 'Certificate', icon: FileCheck, stepNum: '4' },
+  { id: 'checklist', label: 'Photo & Details', shortLabel: 'Photos', icon: Camera, stepNum: '1' },
+  { id: 'results', label: 'Official AI Report & Certificate', shortLabel: 'Report', icon: FileCheck, stepNum: '2' },
 ];
+
+/* 
+// ── PREVIOUS 3-STEP PAID FLOW (UNCOMMENT IF RE-ENABLING PAYMENT GATE) ──
+const STEPS_PAID = [
+  { id: 'checklist', label: 'Photo & Details', shortLabel: 'Photos', icon: Camera, stepNum: '1' },
+  { id: 'results', label: 'AI Damage Analysis', shortLabel: 'Analysis', icon: Cpu, stepNum: '2' },
+  { id: 'unlocked', label: 'Official Certificate', shortLabel: 'Certificate', icon: FileCheck, stepNum: '3' },
+];
+*/
 
 export default function App() {
   const [isMounted, setIsMounted] = useState(false);
@@ -50,8 +58,9 @@ export default function App() {
     '08': null, '09': null, '10': null, '11': null, '12': null, '13': null, '14': null
   });
 
-  // User info captured at paywall
-  const [userInfo, setUserInfo] = useState({ name: '', email: '' });
+  // User info & consent captured before analysis
+  const [userInfo, setUserInfo] = useState({ firstName: '', surname: '', name: '', email: '' });
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Payment State ($3 iCredit)
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -84,7 +93,8 @@ export default function App() {
     });
     setAnalysisResults(null);
     setActiveInspectionId(null);
-    setUserInfo({ name: '', email: '' });
+    setUserInfo({ firstName: '', surname: '', name: '', email: '' });
+    setTermsAccepted(false);
     setCurrentStepState('checklist');
     if (typeof window !== 'undefined') {
       window.history.pushState({ step: 'checklist' }, '', window.location.pathname);
@@ -103,8 +113,17 @@ export default function App() {
 
     const urlInspectionId = params.get('inspectionId') || params.get('Custom1') || params.get('custom1');
     const savedInspectionId = urlInspectionId || localStorage.getItem('carsinsure_pending_inspection_id') || localStorage.getItem('carsinsure_active_inspection_id');
-    const savedName = localStorage.getItem('carsinsure_user_name') || 'Valued Client';
+    const savedName = localStorage.getItem('carsinsure_user_name') || '';
     const savedEmail = localStorage.getItem('carsinsure_user_email') || '';
+    if (savedName || savedEmail) {
+      const parts = savedName.trim().split(' ');
+      setUserInfo({
+        firstName: parts[0] || '',
+        surname: parts.slice(1).join(' ') || '',
+        name: savedName,
+        email: savedEmail
+      });
+    }
 
     if (isPaymentSuccess && savedInspectionId) {
       if (paymentProcessedRef.current) return;
@@ -116,7 +135,6 @@ export default function App() {
 
       const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
       setActiveInspectionId(savedInspectionId);
-      setUserInfo({ name: savedName, email: savedEmail });
 
       // Confirm checkout record & load inspection data
       fetch(`${API_BASE}/api/payment/checkout`, {
@@ -299,6 +317,27 @@ export default function App() {
       toast.error('Please upload or capture at least one vehicle photo before running AI inspection.');
       return;
     }
+    try {
+      await leadFormSchema.validate({
+        firstName: userInfo.firstName,
+        surname: userInfo.surname,
+        email: userInfo.email,
+      });
+    } catch (err) {
+      toast.error(err.message || 'Please complete all required driver details.');
+      return;
+    }
+    if (!termsAccepted) {
+      return;
+    }
+
+    const payloadUserInfo = {
+      firstName: userInfo.firstName.trim(),
+      surname: userInfo.surname.trim(),
+      name: `${userInfo.firstName.trim()} ${userInfo.surname.trim()}`,
+      email: userInfo.email.trim()
+    };
+
     setIsUploading(true);
     toast.info('Analyzing vehicle photos with AI engine...');
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -308,7 +347,7 @@ export default function App() {
         res = await fetch(`${API_BASE}/api/inspection/analyze`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ vehicleData, photos })
+          body: JSON.stringify({ vehicleData, photos, userInfo: payloadUserInfo })
         });
       } catch (firstErr) {
         console.warn('Initial inspection request encountered cold-start delay, retrying once...', firstErr);
@@ -317,7 +356,7 @@ export default function App() {
         res = await fetch(`${API_BASE}/api/inspection/analyze`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ vehicleData, photos })
+          body: JSON.stringify({ vehicleData, photos, userInfo: payloadUserInfo })
         });
       }
 
@@ -327,7 +366,7 @@ export default function App() {
         res = await fetch(`${API_BASE}/api/inspection/analyze`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ vehicleData, photos })
+          body: JSON.stringify({ vehicleData, photos, userInfo: payloadUserInfo })
         });
       }
 
@@ -335,19 +374,18 @@ export default function App() {
       if (data.success) {
         setActiveInspectionId(data.inspectionId);
         setAnalysisResults(data.fullResults);
-        setUserInfo({ name: '', email: '' });
+        setUserInfo(payloadUserInfo);
         try {
           localStorage.setItem('carsinsure_step', 'results');
           localStorage.setItem('carsinsure_active_inspection_id', data.inspectionId);
           localStorage.setItem('carsinsure_analysis_results', JSON.stringify(data.fullResults));
           localStorage.setItem('carsinsure_photos', JSON.stringify(photos));
           localStorage.setItem('carsinsure_vehicle_data', JSON.stringify(vehicleData));
-          localStorage.removeItem('carsinsure_user_name');
-          localStorage.removeItem('carsinsure_user_email');
-          localStorage.removeItem('carsinsure_pending_inspection_id');
+          localStorage.setItem('carsinsure_user_name', payloadUserInfo.name);
+          localStorage.setItem('carsinsure_user_email', payloadUserInfo.email);
         } catch (e) {}
         setCurrentStep('results');
-        toast.success('AI Visual Analysis Complete!');
+        toast.success(`AI Visual Analysis Complete! Report dispatched to ${payloadUserInfo.email}`);
       } else {
         toast.error('Analysis error: ' + (data.error || 'Server error occurred'));
       }
@@ -363,13 +401,13 @@ export default function App() {
   const currentStepIndex = STEPS.findIndex(s => s.id === currentStep);
 
   return (
-    <div className="min-h-screen bg-[#F1F5F9] text-slate-900 font-sans antialiased flex flex-col items-center justify-start pb-16 overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen bg-[#F1F5F9] text-slate-900 font-sans antialiased flex flex-col items-center justify-start pt-14 sm:pt-16 pb-16 overflow-x-hidden w-full max-w-full">
       {/* Top Header */}
       <Header setCurrentStep={setCurrentStep} currentStep={currentStep} />
 
       {/* Stepper Navigation Bar (#022a5b royal midnight gradient) */}
-      <div className="w-full max-w-6xl px-4 sm:px-8 pt-6 pb-2">
-        <div className="bg-white rounded-2xl p-2 sm:p-2.5 border border-slate-200/90 shadow-xs flex items-center justify-between gap-1 sm:gap-2">
+      <div className="w-full max-w-6xl px-3 sm:px-8 pt-4 sm:pt-6 pb-2">
+        <div className="bg-white rounded-2xl p-1.5 sm:p-2.5 border border-slate-200/90 shadow-xs flex items-center justify-between gap-1 sm:gap-2">
           {STEPS.map((step, idx) => {
             const Icon = step.icon;
             const isPassed = currentStepIndex > idx;
@@ -378,7 +416,7 @@ export default function App() {
             return (
               <React.Fragment key={step.id}>
                 <div 
-                  className={`flex-1 flex items-center justify-center sm:justify-start gap-2.5 py-2 px-3 sm:px-4 rounded-xl transition-all ${
+                  className={`flex-1 flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2.5 py-1.5 sm:py-2 px-2 sm:px-4 rounded-xl transition-all ${
                     isCurrent 
                       ? 'bg-gradient-to-r from-[#022a5b] to-[#04428e] text-white font-extrabold shadow-md shadow-[#022a5b]/20' 
                       : isPassed 
@@ -404,7 +442,7 @@ export default function App() {
                 </div>
 
                 {idx < STEPS.length - 1 && (
-                  <div className={`w-3 sm:w-6 h-0.5 rounded-full shrink-0 transition-all ${
+                  <div className={`w-2 sm:w-6 h-0.5 rounded-full shrink-0 transition-all ${
                     currentStepIndex > idx ? 'bg-[#022a5b]' : 'bg-slate-200'
                   }`} />
                 )}
@@ -415,7 +453,7 @@ export default function App() {
       </div>
 
       {/* Main Content Area */}
-      <main className="w-full max-w-6xl px-4 sm:px-8 pt-4">
+      <main className="w-full max-w-6xl px-3 sm:px-8 pt-3 sm:pt-4">
         
         {/* PAYMENT VERIFICATION IN-FLIGHT LOADER */}
         {isVerifyingPayment && (
@@ -437,10 +475,29 @@ export default function App() {
             handleFileUpload={handleFileUpload}
             handleAnalyzePhotos={handleAnalyzePhotos}
             isUploading={isUploading}
+            userInfo={userInfo}
+            setUserInfo={setUserInfo}
+            termsAccepted={termsAccepted}
+            setTermsAccepted={setTermsAccepted}
           />
         )}
 
-        {/* STEP 2: AI RESULTS & 2D CAR MAP */}
+        {/* STEP 2: OFFICIAL AI REPORT & DOWNLOADABLE CERTIFICATE (ACTIVE 2-STEP FLOW) */}
+        {!isVerifyingPayment && !isUploading && (currentStep === 'results' || currentStep === 'unlocked') && (
+          <UnlockedReport 
+            vehicleData={vehicleData}
+            userInfo={userInfo}
+            analysisResults={analysisResults}
+            activeInspectionId={activeInspectionId}
+            photos={photos}
+            onBack={() => setCurrentStep('checklist')}
+            handleStartNewScan={handleStartNewScan}
+          />
+        )}
+
+        {/* 
+        // ── PREVIOUS 3-STEP PAID FLOW (PRESERVED FOR EASY RE-IMPLEMENTATION) ──
+        // STEP 2: PREVIEW CAR MAP TEASER
         {!isVerifyingPayment && !isUploading && currentStep === 'results' && (
           <CarMapResults 
             vehicleData={vehicleData}
@@ -451,7 +508,7 @@ export default function App() {
           />
         )}
 
-        {/* STEP 3: PAYWALL FORM */}
+        // STEP 3: PAYWALL FORM ($3 iCredit)
         {!isVerifyingPayment && !isUploading && currentStep === 'paywall' && (
           <PaywallForm 
             userInfo={userInfo}
@@ -463,7 +520,7 @@ export default function App() {
           />
         )}
 
-        {/* STEP 4: UNLOCKED REPORT */}
+        // STEP 4: UNLOCKED REPORT (Post-payment)
         {!isVerifyingPayment && !isUploading && currentStep === 'unlocked' && (
           <UnlockedReport 
             vehicleData={vehicleData}
@@ -474,6 +531,7 @@ export default function App() {
             handleStartNewScan={handleStartNewScan}
           />
         )}
+        */}
 
       </main>
     </div>

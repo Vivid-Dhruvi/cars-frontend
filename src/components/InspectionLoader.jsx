@@ -9,7 +9,7 @@ export default function InspectionLoader({ type = 'ai_inspection', vehicleData =
 
   const aiStages = [
     { title: 'Uploading & Preprocessing Angles', desc: 'Validating 14-angle high-resolution captures...', icon: Car },
-    { title: 'Gemini Vision AI Surface Scan', desc: 'Analyzing body panels for scratches, dents & paint wear...', icon: Cpu },
+    { title: 'CarInsuRent AI Surface Scan', desc: 'Analyzing body panels for scratches, dents & paint wear...', icon: Cpu },
     { title: '2D Interactive Blueprint Mapping', desc: 'Positioning damage pins on schematic coordinates...', icon: Sparkles },
     { title: 'Compiling Inspection Report', desc: 'Calculating severity scores & verification record...', icon: FileText },
   ];

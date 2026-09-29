@@ -19,31 +19,25 @@ export default function Header({ setCurrentStep, currentStep }) {
   };
 
   return (
-    <header className="w-full bg-white border-b border-slate-200/90 px-4 sm:px-8 h-16 flex items-center justify-between gap-4 sticky top-0 z-40 shadow-xs">
-      {/* Brand Logo */}
+    <header className="fixed top-0 left-0 right-0 w-full bg-white border-b border-slate-200/90 px-3 sm:px-8 h-14 sm:h-16 flex items-center justify-between z-50 shadow-xs">
+      {/* Brand Logo Lockup: Official Vector Logo (with native matching AI font) + Automotive AI Visual Inspection */}
       <button 
         type="button" 
-        aria-label="CarsInsure AI Home" 
-        className="flex items-center gap-3 cursor-pointer text-left group" 
+        aria-label="CarInsuRent AI Home" 
+        className="flex flex-col items-start cursor-pointer text-left focus:outline-none shrink-0" 
         onClick={handleLogoClick}
       >
-        <div className="w-9 h-9 rounded-xl bg-[#022a5b] text-white flex items-center justify-center font-bold text-base shadow-xs group-hover:bg-[#033b7e] transition-colors">
-          C
-        </div>
-
-        <div className="flex flex-col">
-          <div className="flex items-center gap-1.5">
-            <span className="font-extrabold text-[#022a5b] text-lg tracking-tight leading-none">
-              CarsInsure<span className="text-[#033b7e]">.ai</span>
-            </span>
-          </div>
-          <span className="text-[11px] text-slate-500 font-medium">
-            Automotive AI Visual Inspection
-          </span>
-        </div>
+        <img 
+          src="/logo-ai.svg?v=5" 
+          alt="CarInsuRent AI" 
+          className="h-5 sm:h-[26px] w-auto object-contain shrink-0" 
+        />
+        <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium tracking-tight mt-0.5 whitespace-nowrap pl-[27px] sm:pl-[35px]">
+          Automotive AI Visual Inspection
+        </span>
       </button>
 
-      {/* Right side area empty */}
+      {/* Right side area empty (Free Tool badge removed per user request) */}
       <div></div>
     </header>
   );

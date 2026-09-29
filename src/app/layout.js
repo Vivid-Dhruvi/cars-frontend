@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "CarsInsure AI - Vehicle Damage Visual Inspection",
-  description: "AI-driven automotive physical damage visual inspection protocol",
+  title: "CarInsuRent AI - Automotive AI Visual Inspection",
+  description: "AI-driven automotive physical damage visual inspection protocol by CarInsuRent",
 };
 
 export const viewport = {
