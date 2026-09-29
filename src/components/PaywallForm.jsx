@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { toast } from 'sonner';
 import { CreditCard, Lock, ArrowRight, ArrowLeft, ShieldCheck, Loader2 } from 'lucide-react';
 
 export default function PaywallForm({ 
@@ -110,32 +111,39 @@ export default function PaywallForm({
               return;
             }
 
-            // Fallback / mock mode: direct checkout confirmation
-            const checkoutRes = await fetch(`${API_BASE}/api/payment/checkout`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                inspectionId: inspId,
-                name: userInfo.name,
-                email: userInfo.email,
-                amount: 3.00
-              })
-            });
-            const checkoutData = await checkoutRes.json();
-            if (checkoutData.report) {
+            // Only allow direct unlock if backend explicitly signals local mock development mode
+            if (data.isMock) {
+              const checkoutRes = await fetch(`${API_BASE}/api/payment/checkout`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  inspectionId: inspId,
+                  name: userInfo.name,
+                  email: userInfo.email,
+                  amount: 3.00
+                })
+              });
+              const checkoutData = await checkoutRes.json();
+              if (checkoutData.report) {
+                try {
+                  localStorage.setItem('carsinsure_analysis_results', JSON.stringify(checkoutData.report));
+                } catch (e) {}
+              }
+
               try {
-                localStorage.setItem('carsinsure_analysis_results', JSON.stringify(checkoutData.report));
+                localStorage.setItem('carsinsure_step', 'unlocked');
               } catch (e) {}
+
+              setIsProcessingPayment(false);
+              setCurrentStep('unlocked');
+              return;
             }
 
-            try {
-              localStorage.setItem('carsinsure_step', 'unlocked');
-            } catch (e) {}
-
+            toast.error(data.error || 'Payment gateway initialization failed. Please try again.');
             setIsProcessingPayment(false);
-            setCurrentStep('unlocked');
           } catch (err) {
             console.error('Payment checkout error:', err);
+            toast.error('Unable to connect to payment server. Check connection.');
             setIsProcessingPayment(false);
           }
         }} 

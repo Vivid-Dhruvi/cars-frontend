@@ -318,7 +318,8 @@ export default function CarMapResults({
   vehicleData, 
   analysisResults,
   photos,
-  setCurrentStep 
+  setCurrentStep,
+  handleStartNewScan
 }) {
   const findings = React.useMemo(() => {
     const raw = analysisResults?.findings || [];
@@ -556,7 +557,13 @@ export default function CarMapResults({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setCurrentStep('checklist')}
+                  onClick={() => {
+                    if (handleStartNewScan) {
+                      handleStartNewScan();
+                    } else {
+                      setCurrentStep('checklist');
+                    }
+                  }}
                   className="w-full sm:w-auto h-12 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors"
                 >
                   <RotateCcw className="w-4 h-4" /> Start New Scan

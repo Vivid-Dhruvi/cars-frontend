@@ -59,6 +59,38 @@ export default function App() {
   const [activeInspectionId, setActiveInspectionId] = useState(null);
   const [analysisResults, setAnalysisResults] = useState(null);
 
+  // Clean scan reset: wipe memory and persistent storage
+  const handleStartNewScan = useCallback(() => {
+    try {
+      localStorage.removeItem('carsinsure_step');
+      localStorage.removeItem('carsinsure_photos');
+      localStorage.removeItem('carsinsure_analysis_results');
+      localStorage.removeItem('carsinsure_active_inspection_id');
+      localStorage.removeItem('carsinsure_pending_inspection_id');
+      localStorage.removeItem('carsinsure_vehicle_data');
+      localStorage.removeItem('carsinsure_user_name');
+      localStorage.removeItem('carsinsure_user_email');
+    } catch (e) {}
+
+    setPhotos({
+      '01': null, '02': null, '03': null, '04': null, '05': null, '06': null, '07': null,
+      '08': null, '09': null, '10': null, '11': null, '12': null, '13': null, '14': null
+    });
+    setVehicleData({
+      company: '',
+      makeModel: '',
+      plateNumber: '',
+      inspectionType: 'pickup'
+    });
+    setAnalysisResults(null);
+    setActiveInspectionId(null);
+    setUserInfo({ name: '', email: '' });
+    setCurrentStepState('checklist');
+    if (typeof window !== 'undefined') {
+      window.history.pushState({ step: 'checklist' }, '', window.location.pathname);
+    }
+  }, []);
+
   // Restore state on refresh OR handle return redirect from iCredit Hosted Payment Gateway
   useEffect(() => {
     setIsMounted(true);
@@ -271,11 +303,34 @@ export default function App() {
     toast.info('Analyzing vehicle photos with AI engine...');
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     try {
-      const res = await fetch(`${API_BASE}/api/inspection/analyze`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vehicleData, photos })
-      });
+      let res;
+      try {
+        res = await fetch(`${API_BASE}/api/inspection/analyze`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vehicleData, photos })
+        });
+      } catch (firstErr) {
+        console.warn('Initial inspection request encountered cold-start delay, retrying once...', firstErr);
+        toast.info('Connecting to AI engine, processing inspection...');
+        await new Promise(r => setTimeout(r, 1500));
+        res = await fetch(`${API_BASE}/api/inspection/analyze`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vehicleData, photos })
+        });
+      }
+
+      if (res && (res.status === 503 || res.status === 504)) {
+        console.warn('Server busy or warming up, retrying...');
+        await new Promise(r => setTimeout(r, 1500));
+        res = await fetch(`${API_BASE}/api/inspection/analyze`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vehicleData, photos })
+        });
+      }
+
       const data = await res.json();
       if (data.success) {
         setActiveInspectionId(data.inspectionId);
@@ -392,6 +447,7 @@ export default function App() {
             analysisResults={analysisResults}
             photos={photos}
             setCurrentStep={setCurrentStep}
+            handleStartNewScan={handleStartNewScan}
           />
         )}
 
@@ -415,6 +471,7 @@ export default function App() {
             analysisResults={analysisResults}
             activeInspectionId={activeInspectionId}
             photos={photos}
+            handleStartNewScan={handleStartNewScan}
           />
         )}
 
