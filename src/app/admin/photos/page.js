@@ -143,13 +143,18 @@ function PhotosGalleryContent() {
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
+            <img 
+              src="/logo-ai.svg?v=5" 
+              alt="CarInsuRent" 
+              className="h-6 w-auto object-contain shrink-0 hidden sm:block" 
+            />
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
                   Uploaded Photos Gallery
                 </h1>
-                <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-[10px] font-bold">
-                  {uniquePhotos.length} Angles Stored
+                <span className="px-2.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-[10px] font-bold whitespace-nowrap shrink-0">
+                  {uniquePhotos.length} Angles
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -176,7 +181,7 @@ function PhotosGalleryContent() {
           <div className="flex items-center gap-2.5">
             <AlertCircle className="w-4 h-4 text-blue-700 shrink-0" />
             <span>
-              All {uniquePhotos.length} high-resolution photographs are permanently stored on the server disk for future AI training, model fine-tuning, and audit defense. Click any photo to expand.
+              All {uniquePhotos.length} high-resolution photographs captured during inspection. Click any photo to expand.
             </span>
           </div>
           <span className="text-[11px] font-bold text-blue-800 shrink-0">
@@ -217,7 +222,7 @@ function PhotosGalleryContent() {
                     <span className="font-bold text-slate-900 block truncate text-xs">{photo.angle}</span>
                     {photo.sizeBytes && (
                       <span className="text-[10px] text-slate-400 font-mono">
-                        {(photo.sizeBytes / 1024).toFixed(1)} KB · Disk Stored
+                        {(photo.sizeBytes / 1024).toFixed(1)} KB · High-Res
                       </span>
                     )}
                   </div>
