@@ -353,10 +353,28 @@ export default function CarMapResults({
       setDownloading(true);
       toast.info('Generating official certified PDF report...');
       const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+      const savedName = (typeof window !== 'undefined') ? (localStorage.getItem('carsinsure_user_name') || '') : '';
+      const savedEmail = (typeof window !== 'undefined') ? (localStorage.getItem('carsinsure_user_email') || '') : '';
+      const resolvedUserInfo = {
+        name: userInfo?.name || `${userInfo?.firstName || ''} ${userInfo?.surname || ''}`.trim() || savedName || analysisResults?.user_info?.name || '',
+        email: userInfo?.email || savedEmail || analysisResults?.user_info?.email || '',
+        firstName: userInfo?.firstName || savedName?.split(' ')?.[0] || '',
+        surname: userInfo?.surname || savedName?.split(' ')?.slice(1)?.join(' ') || ''
+      };
+
+      const inspId = activeInspectionId || analysisResults?.inspection_id || (typeof window !== 'undefined' ? localStorage.getItem('carsinsure_active_inspection_id') : null);
+
       const response = await fetch(`${API_BASE}/api/report/pdf`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vehicleData, analysisResults, photos: activePhotos, userInfo })
+        body: JSON.stringify({ 
+          activeInspectionId: inspId,
+          vehicleData, 
+          analysisResults, 
+          photos: activePhotos, 
+          userInfo: resolvedUserInfo 
+        })
       });
 
       if (!response.ok) {
@@ -369,7 +387,7 @@ export default function CarMapResults({
       a.href = url;
       const cleanMake = (vehicleData?.makeModel || 'vehicle').replace(/\s+/g, '_');
       const plate = (vehicleData?.plateNumber || 'report').replace(/\s+/g, '_');
-      a.download = `carinsurent-damage-certificate-${cleanMake}-${plate}.pdf`;
+      a.download = `CarInsuRent-Certificate-${inspId || cleanMake}-${plate}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);

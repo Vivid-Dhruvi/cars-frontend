@@ -15,6 +15,7 @@ function PhotosGalleryContent() {
   const [loading, setLoading] = useState(true);
   const [inspection, setInspection] = useState(null);
   const [activePhoto, setActivePhoto] = useState(null);
+  const [unauthorized, setUnauthorized] = useState(false);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -24,15 +25,25 @@ function PhotosGalleryContent() {
         setLoading(false);
         return;
       }
+      const token = typeof window !== 'undefined' ? (sessionStorage.getItem('carsinsure_admin_token') || localStorage.getItem('carsinsure_admin_token')) : '';
+      if (!token) {
+        setUnauthorized(true);
+        setLoading(false);
+        return;
+      }
       try {
         setLoading(true);
-        const res = await fetch(`${API_BASE}/api/admin/inspections`);
+        const res = await fetch(`${API_BASE}/api/admin/inspections`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         if (res.ok) {
           const data = await res.json();
           if (data.success && Array.isArray(data.inspections)) {
             const found = data.inspections.find(i => i.inspection_id === inspectionId);
             setInspection(found || null);
           }
+        } else if (res.status === 401) {
+          setUnauthorized(true);
         }
       } catch (e) {
         console.error('Error fetching inspection photos:', e);
@@ -74,6 +85,28 @@ function PhotosGalleryContent() {
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-3">
         <RefreshCw className="w-8 h-8 animate-spin text-[#022a5b]" />
         <p className="text-sm font-semibold text-slate-600">Loading uploaded vehicle photos...</p>
+      </div>
+    );
+  }
+
+  if (unauthorized) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center antialiased">
+        <div className="w-full max-w-md bg-white rounded-3xl p-8 border border-slate-200 shadow-xl flex flex-col items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-[#022a5b] text-white flex items-center justify-center shadow-md">
+            <ShieldCheck className="w-7 h-7" />
+          </div>
+          <h2 className="text-lg font-bold text-slate-900 mt-1">Protected Admin Gallery</h2>
+          <p className="text-xs text-slate-500 max-w-sm">
+            Administrator authentication required. Please sign in to the Admin Dashboard to inspect full-resolution photos.
+          </p>
+          <Link 
+            href="/admin" 
+            className="mt-2 w-full py-2.5 bg-[#022a5b] text-white rounded-xl text-xs font-bold hover:bg-[#022a5b]/90 transition-colors inline-flex items-center justify-center gap-2 shadow-md cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Sign In to Admin Dashboard
+          </Link>
+        </div>
       </div>
     );
   }

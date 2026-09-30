@@ -38,7 +38,7 @@ export default function Header({ setCurrentStep, currentStep }) {
       </button>
 
       {/* Right side: Reports Log Link */}
-      <div className="flex items-center gap-2">
+      {/* <div className="flex items-center gap-2">
         <a 
           href="/admin" 
           className="text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 shrink-0"
@@ -47,7 +47,7 @@ export default function Header({ setCurrentStep, currentStep }) {
           <FileText className="w-3.5 h-3.5 text-slate-500" />
           <span className="hidden sm:inline">Reports Log</span>
         </a>
-      </div>
+      </div> */}
     </header>
   );
 }
