@@ -5,9 +5,132 @@ import {
   LayoutDashboard, Shield, FileText, CreditCard, Lock, Sparkles, ArrowLeft, 
   Search, Filter, Download, ChevronRight, UserCheck, TrendingUp, DollarSign,
   Bell, MapPin, Tag, Sliders, Layers, Settings, LogOut, ChevronDown, CheckCircle2, 
-  Car, Eye, EyeOff, Image as ImageIcon, ExternalLink, RefreshCw, X, AlertCircle, Mail
+  Car, Eye, EyeOff, Image as ImageIcon, ExternalLink, RefreshCw, X, AlertCircle, Mail,
+  Menu, LayoutGrid, List
 } from 'lucide-react';
 import Link from 'next/link';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+
+/**
+ * Responsive Shadcn Pagination Bar for Admin Tables
+ * Adapts between mobile (compact previous/next + page indicator) and tablet/desktop (numbered pages + ellipsis).
+ */
+function AdminTablePagination({
+  currentPage,
+  totalPages,
+  totalItems,
+  startIndex,
+  endIndex,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+  itemLabel = "records",
+}) {
+  if (totalItems === 0) return null;
+
+  // Calculate page numbers with ellipsis window
+  const getPageNumbers = () => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    if (currentPage <= 3) {
+      return [1, 2, 3, 4, 'ellipsis', totalPages];
+    }
+    if (currentPage >= totalPages - 2) {
+      return [1, 'ellipsis', totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    }
+    return [1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', totalPages];
+  };
+
+  const pages = getPageNumbers();
+
+  return (
+    <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* Information text & page size selector */}
+      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-xs text-slate-500 w-full sm:w-auto">
+        <span>
+          Showing <span className="font-bold text-slate-800">{totalItems > 0 ? startIndex + 1 : 0}</span> to{" "}
+          <span className="font-bold text-slate-800">{endIndex}</span> of{" "}
+          <span className="font-bold text-slate-800">{totalItems}</span> {itemLabel}
+        </span>
+        {onPageSizeChange && (
+          <div className="flex items-center gap-1.5 pl-3 border-l border-slate-200">
+            <span className="text-[11px] text-slate-400 font-medium">Per page:</span>
+            <select
+              aria-label={`Select ${itemLabel} per page`}
+              value={pageSize}
+              onChange={(e) => {
+                onPageSizeChange(Number(e.target.value));
+                onPageChange(1);
+              }}
+              className="bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 font-bold focus:outline-hidden focus:ring-2 focus:ring-[#022a5b] cursor-pointer"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+        )}
+      </div>
+
+      {/* Shadcn UI Pagination Controls */}
+      <div className="w-full sm:w-auto flex justify-center sm:justify-end">
+        <Pagination className="mx-0 w-auto">
+          <PaginationContent className="gap-1 sm:gap-1.5">
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+                disabled={currentPage <= 1}
+              />
+            </PaginationItem>
+
+            {/* Mobile View: Compact "Page X of Y" indicator */}
+            <li className="flex sm:hidden items-center px-2 text-xs font-bold text-slate-700">
+              Page {currentPage} of {totalPages}
+            </li>
+
+            {/* Tablet & Desktop View: Numbered Items */}
+            {pages.map((p, idx) => {
+              if (p === 'ellipsis') {
+                return (
+                  <PaginationItem key={`ellipsis-${idx}`} className="hidden sm:inline-block">
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                );
+              }
+              return (
+                <PaginationItem key={p} className="hidden sm:inline-block">
+                  <PaginationLink
+                    isActive={currentPage === p}
+                    onClick={() => onPageChange(p)}
+                  >
+                    {p}
+                  </PaginationLink>
+                </PaginationItem>
+              );
+            })}
+
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage >= totalPages}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+    </div>
+  );
+}
 
 export default function AdminDashboardPage() {
   const [adminTab, setAdminTab] = useState('overview');
@@ -17,6 +140,37 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [selectedPhotosModal, setSelectedPhotosModal] = useState(null); // { inspectionId, photos, vehicleInfo, userInfo }
   const menuRef = useRef(null);
+
+  // View Mode: 'table' vs 'cards' (mobile and tablet < 1024px always use 'cards', desktop defaults to 'table' with toggle)
+  const [viewMode, setViewMode] = useState('table');
+  const [userSelectedViewMode, setUserSelectedViewMode] = useState(false);
+
+  // Automatically ensure mobile and tablet screens use 'cards' view
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handleResize = () => {
+        if (window.innerWidth < 1024) {
+          setViewMode('cards');
+        } else if (!userSelectedViewMode) {
+          setViewMode('table');
+        }
+      };
+      handleResize();
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, [userSelectedViewMode]);
+
+  const handleToggleViewMode = (mode) => {
+    setViewMode(mode);
+    setUserSelectedViewMode(true);
+  };
+
+  // Pagination states for responsive tables
+  const [reportsCurrentPage, setReportsCurrentPage] = useState(1);
+  const [reportsPageSize, setReportsPageSize] = useState(10);
+  const [clientsCurrentPage, setClientsCurrentPage] = useState(1);
+  const [clientsPageSize, setClientsPageSize] = useState(10);
 
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -141,6 +295,24 @@ export default function AdminDashboardPage() {
     const id = (item.inspection_id || '').toLowerCase();
     return name.includes(term) || email.includes(term) || plate.includes(term) || make.includes(term) || id.includes(term);
   });
+
+  // Reset pagination to page 1 on search change
+  useEffect(() => {
+    setReportsCurrentPage(1);
+    setClientsCurrentPage(1);
+  }, [searchTerm]);
+
+  // Paginated Reports Slices
+  const totalReportsPages = Math.max(1, Math.ceil(filteredInspections.length / reportsPageSize));
+  const reportsStartIndex = (reportsCurrentPage - 1) * reportsPageSize;
+  const reportsEndIndex = Math.min(reportsStartIndex + reportsPageSize, filteredInspections.length);
+  const paginatedReports = filteredInspections.slice(reportsStartIndex, reportsEndIndex);
+
+  // Paginated Clients Slices
+  const totalClientsPages = Math.max(1, Math.ceil(filteredInspections.length / clientsPageSize));
+  const clientsStartIndex = (clientsCurrentPage - 1) * clientsPageSize;
+  const clientsEndIndex = Math.min(clientsStartIndex + clientsPageSize, filteredInspections.length);
+  const paginatedClients = filteredInspections.slice(clientsStartIndex, clientsEndIndex);
 
   // Calculate live statistics
   const totalCount = inspections.length;
@@ -278,8 +450,160 @@ export default function AdminDashboardPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans flex flex-col lg:flex-row antialiased">
       
-      {/* EXECUTIVE LIGHT SIDEBAR */}
-      <aside className="w-full lg:w-64 bg-white text-slate-900 p-5 flex flex-col justify-between shrink-0 lg:min-h-screen border-r border-slate-200 shadow-xs">
+      {/* ── MOBILE & TABLET STICKY TOP APP BAR (VISIBLE ON < 1024px) ── */}
+      <header className="lg:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 py-3 flex items-center justify-between shadow-xs">
+        <div className="flex items-center gap-3">
+          <button
+            ref={menuRef}
+            type="button"
+            aria-label="Open navigation sidebar menu"
+            onClick={() => setNavigationOpen(true)}
+            className="w-10 h-10 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors cursor-pointer shadow-2xs"
+          >
+            <Menu className="w-5 h-5 text-slate-800" />
+          </button>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#022a5b] text-white flex items-center justify-center font-bold shadow-xs">
+              <Shield className="w-4 h-4" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-bold text-slate-900 text-sm tracking-tight leading-tight">CarInsuRent Admin</span>
+              <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Reports & Portal</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => fetchInspections()}
+            disabled={loading}
+            className="w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors cursor-pointer"
+            title="Refresh inspection list"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-[#022a5b]' : 'text-slate-600'}`} />
+          </button>
+          <Link
+            href="/"
+            className="px-2.5 py-1.5 rounded-xl bg-[#022a5b] hover:bg-[#022a5b]/90 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Scanner</span>
+          </Link>
+        </div>
+      </header>
+
+      {/* ── MOBILE & TABLET SLIDE-OUT DRAWER SIDEBAR (VISIBLE ON < 1024px WHEN OPEN) ── */}
+      {navigationOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Backdrop overlay */}
+          <div
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+            onClick={() => setNavigationOpen(false)}
+            aria-hidden="true"
+          />
+
+          {/* Drawer sidebar panel */}
+          <div className="fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-white shadow-2xl p-5 flex flex-col justify-between z-50 overflow-y-auto">
+            <div className="flex flex-col gap-6">
+              {/* Drawer Title & Close Button */}
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-[#022a5b] text-white flex items-center justify-center font-bold shadow-xs">
+                    <Shield className="w-4.5 h-4.5" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-slate-900 text-base tracking-tight leading-none">CarInsuRent Admin</span>
+                    <span className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase mt-0.5">Admin Portal</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setNavigationOpen(false)}
+                  className="w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-colors cursor-pointer"
+                  aria-label="Close menu"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Navigation Items in Drawer */}
+              <div className="flex flex-col gap-4">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">Navigation</span>
+                <nav className="flex flex-col gap-1.5">
+                  {[
+                    { id: 'overview', label: 'Dashboard Overview', icon: LayoutDashboard },
+                    { id: 'inspections', label: 'All Generated Reports', icon: FileText, badge: totalCount },
+                    { id: 'users', label: 'Clients & Emails', icon: Shield, badge: totalCount },
+                  ].map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = adminTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        aria-current={isActive ? 'page' : undefined}
+                        onClick={() => selectTab(tab.id)}
+                        className={`flex items-center justify-between min-h-11 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                          isActive 
+                            ? 'bg-[#022a5b] text-white font-bold shadow-xs' 
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon className="w-4 h-4" />
+                          <span>{tab.label}</span>
+                        </div>
+                        {tab.badge !== undefined && (
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            {tab.badge}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </nav>
+
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 mt-3">Quick Export</span>
+                <button
+                  onClick={() => {
+                    handleExportCSV();
+                    setNavigationOpen(false);
+                  }}
+                  className="flex items-center gap-2.5 min-h-11 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
+                >
+                  <Download className="w-4 h-4 text-emerald-600" />
+                  <span>Export CSV Spreadsheet</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Drawer Footer User Info & Sign Out */}
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#022a5b]/10 text-[#022a5b] font-bold text-xs flex items-center justify-center border border-[#022a5b]/20">CR</div>
+                <div>
+                  <span className="text-xs font-bold text-slate-900 block leading-none">CarInsuRent Team</span>
+                  <span className="text-[11px] text-slate-400">Cloudways Host</span>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={handleLogout}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors cursor-pointer text-xs font-bold"
+                title="Sign Out of Admin"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── DESKTOP FIXED EXECUTIVE SIDEBAR (VISIBLE ON >= 1024px) ── */}
+      <aside className="hidden lg:flex lg:w-64 bg-white text-slate-900 p-5 flex-col justify-between shrink-0 lg:min-h-screen border-r border-slate-200 shadow-xs">
         <div className="flex flex-col gap-6">
           {/* Admin App Title */}
           <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
@@ -290,20 +614,10 @@ export default function AdminDashboardPage() {
               <span className="font-bold text-slate-900 text-base tracking-tight leading-none">CarInsuRent Admin</span>
               <span className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase mt-0.5">Reports & Storage</span>
             </div>
-            <button 
-              ref={menuRef} 
-              type="button" 
-              aria-expanded={navigationOpen} 
-              aria-controls="admin-navigation" 
-              onClick={() => setNavigationOpen(open => !open)} 
-              className="ml-auto min-h-10 rounded-xl border border-slate-200 px-3 text-xs font-bold lg:hidden text-slate-700 bg-slate-50"
-            >
-              {navigationOpen ? 'Close' : 'Menu'}
-            </button>
           </div>
 
           {/* LISTING CONTENT GROUP */}
-          <div id="admin-navigation" className={`${navigationOpen ? 'flex' : 'hidden'} flex-col gap-4 lg:flex`}>
+          <div id="admin-navigation" className="flex flex-col gap-4">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">Navigation</span>
             <nav className="flex flex-col gap-1">
               {[
@@ -353,7 +667,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Sidebar Footer User Info */}
-        <div className="pt-4 border-t border-slate-100 hidden lg:flex items-center justify-between">
+        <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[#022a5b]/10 text-[#022a5b] font-bold text-xs flex items-center justify-center border border-[#022a5b]/20">CR</div>
             <div>
@@ -372,6 +686,35 @@ export default function AdminDashboardPage() {
           </button>
         </div>
       </aside>
+
+      {/* ── PREVIOUS INLINE ASIDE (COMMENTED OUT PER USER INSTRUCTIONS) ──
+      <aside className="w-full lg:w-64 bg-white text-slate-900 p-5 flex flex-col justify-between shrink-0 lg:min-h-screen border-r border-slate-200 shadow-xs">
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+            <div className="w-9 h-9 rounded-xl bg-[#022a5b] text-white flex items-center justify-center font-bold shadow-xs">
+              <Shield className="w-4.5 h-4.5" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-bold text-slate-900 text-base tracking-tight leading-none">CarInsuRent Admin</span>
+              <span className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase mt-0.5">Reports & Storage</span>
+            </div>
+            <button 
+              ref={menuRef} 
+              type="button" 
+              aria-expanded={navigationOpen} 
+              aria-controls="admin-navigation" 
+              onClick={() => setNavigationOpen(open => !open)} 
+              className="ml-auto min-h-10 rounded-xl border border-slate-200 px-3 text-xs font-bold lg:hidden text-slate-700 bg-slate-50"
+            >
+              {navigationOpen ? 'Close' : 'Menu'}
+            </button>
+          </div>
+          <div id="admin-navigation" className={`${navigationOpen ? 'flex' : 'hidden'} flex-col gap-4 lg:flex`}>
+            ...
+          </div>
+        </div>
+      </aside>
+      ── END PREVIOUS INLINE ASIDE ── */}
 
       {/* MAIN DASHBOARD CONTENT AREA */}
       <main className="min-w-0 flex-1 p-4 sm:p-6 xl:p-8 flex flex-col gap-6">
@@ -505,6 +848,36 @@ export default function AdminDashboardPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {/* View Mode Toggle: Table vs Cards (Hidden on mobile & tablet, visible on desktop) */}
+                  <div className="hidden lg:flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleViewMode('table')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        viewMode === 'table'
+                          ? 'bg-white text-[#022a5b] shadow-2xs'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                      title="Table View"
+                    >
+                      <List className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Table</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleViewMode('cards')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        viewMode === 'cards'
+                          ? 'bg-white text-[#022a5b] shadow-2xs'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                      title="Card View"
+                    >
+                      <LayoutGrid className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Cards</span>
+                    </button>
+                  </div>
+
                   <button 
                     onClick={handleExportCSV}
                     className="min-h-10 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl border border-slate-200 flex items-center gap-2 transition-colors cursor-pointer"
@@ -525,28 +898,140 @@ export default function AdminDashboardPage() {
                   No inspection reports match your search criteria.
                 </div>
               ) : (
-                <div role="region" aria-label="Inspection reports table" tabIndex={0} className="max-w-full overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="border-b border-slate-200 text-slate-400 uppercase tracking-wider text-[11px] bg-slate-50/80 font-semibold">
-                        <th className="p-3.5 rounded-l-xl">Date & ID</th>
-                        <th className="p-3.5">Customer Name & Email</th>
-                        {/* VEHICLE DETAILS - COMMENTED OUT PER USER REQUEST
-                        <th className="p-3.5">Vehicle Details</th>
-                        */}
-                        <th className="p-3.5">Damage Findings</th>
-                        <th className="p-3.5">Email Status</th>
-                        <th className="p-3.5">Report Link</th>
-                        <th className="p-3.5 rounded-r-xl">Uploaded Images</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {filteredInspections.map((row) => {
+                <>
+                  {viewMode === 'table' ? (
+                    <div role="region" aria-label="Inspection reports table" tabIndex={0} className="max-w-full overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b border-slate-200 text-slate-400 uppercase tracking-wider text-[11px] bg-slate-50/80 font-semibold">
+                            <th className="p-3.5 rounded-l-xl">Date & ID</th>
+                            <th className="p-3.5">Customer Name & Email</th>
+                            {/* VEHICLE DETAILS - COMMENTED OUT PER USER REQUEST
+                            <th className="p-3.5">Vehicle Details</th>
+                            */}
+                            <th className="p-3.5">Damage Findings</th>
+                            <th className="p-3.5">Email Status</th>
+                            <th className="p-3.5">Report Link</th>
+                            <th className="p-3.5 rounded-r-xl">Uploaded Images</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {/* PREVIOUS UNPAGINATED MAPPING (PRESERVED AS COMMENT PER USER INSTRUCTION):
+                          {filteredInspections.map((row) => { ... })}
+                          */}
+                          {paginatedReports.map((row) => {
+                            const name = row.user_info?.name || `${row.user_info?.firstName || ''} ${row.user_info?.surname || ''}`.trim() || 'Valued Client';
+                            const email = row.user_info?.email || 'N/A';
+                            const make = row.vehicle_info?.makeModel || 'Vehicle';
+                            const plate = row.vehicle_info?.plateNumber || 'No Plate';
+                            const company = row.vehicle_info?.company || '';
+                            const dateFormatted = row.created_at 
+                              ? new Date(row.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) 
+                              : 'Recent';
+                            const findingsCount = (row.findings || []).length;
+                            const photosDict = row.photos || {};
+                            const uniquePhotosList = Array.from(new Set(
+                              Object.values(photosDict)
+                                .map(p => (typeof p === 'string' ? p : p?.url || p?.data || p?.filename))
+                                .filter(Boolean)
+                            ));
+                            const photosCount = uniquePhotosList.length > 0 ? uniquePhotosList.length : Object.keys(photosDict).length;
+                            const pdfDirectUrl = row.pdf_url ? `${API_BASE}${row.pdf_url}` : `${API_BASE}/api/reports/${row.inspection_id}/pdf`;
+
+                            return (
+                              <tr key={row.inspection_id} className="hover:bg-slate-50/80 transition-colors">
+                                {/* Date & ID */}
+                                <td className="p-3.5">
+                                  <span className="font-semibold text-slate-900 block">{dateFormatted}</span>
+                                  <span className="text-[10px] text-slate-400 font-mono">{row.inspection_id}</span>
+                                </td>
+
+                                {/* Customer Name & Email */}
+                                <td className="p-3.5">
+                                  <span className="font-bold text-slate-900 block">{name}</span>
+                                  <span className="text-[11px] text-slate-500 select-all">{email}</span>
+                                </td>
+
+                                {/* Damages Count */}
+                                <td className="p-3.5">
+                                  {findingsCount === 0 ? (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                      ✓ Clean Vehicle
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                                      {findingsCount} Defect{findingsCount !== 1 ? 's' : ''}
+                                    </span>
+                                  )}
+                                </td>
+
+                                {/* Email Dispatched */}
+                                <td className="p-3.5">
+                                  {row.email_sent ? (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                      <Mail className="w-3 h-3" /> Sent
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">
+                                      Pending
+                                    </span>
+                                  )}
+                                </td>
+
+                                {/* Report PDF Link */}
+                                <td className="p-3.5">
+                                  <a
+                                    href={pdfDirectUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#022a5b] text-white hover:bg-[#022a5b]/90 text-[11px] font-bold shadow-2xs transition-colors cursor-pointer"
+                                  >
+                                    <Download className="w-3 h-3" />
+                                    <span>PDF Certificate</span>
+                                  </a>
+                                </td>
+
+                                {/* Uploaded Images Link */}
+                                <td className="p-3.5">
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedPhotosModal({
+                                        inspectionId: row.inspection_id,
+                                        photos: photosDict,
+                                        vehicleInfo: row.vehicle_info,
+                                        userInfo: row.user_info
+                                      })}
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold border border-slate-200 transition-colors cursor-pointer"
+                                      title="Open fast photo viewer popup"
+                                    >
+                                      <ImageIcon className="w-3 h-3 text-slate-600" />
+                                      <span>View Photos ({photosCount > 0 ? photosCount : '14'})</span>
+                                    </button>
+                                    <a
+                                      href={`/admin/photos?id=${row.inspection_id}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-[11px] font-bold border border-sky-200 transition-colors cursor-pointer"
+                                      title="Open high-res full page photo gallery in new tab"
+                                    >
+                                      <ExternalLink className="w-3 h-3 text-sky-600" />
+                                      <span>Gallery ↗</span>
+                                    </a>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    /* ── RESPONSIVE CARD VIEW FOR MOBILE, TABLET & DESKTOP ── */
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {paginatedReports.map((row) => {
                         const name = row.user_info?.name || `${row.user_info?.firstName || ''} ${row.user_info?.surname || ''}`.trim() || 'Valued Client';
                         const email = row.user_info?.email || 'N/A';
-                        const make = row.vehicle_info?.makeModel || 'Vehicle';
-                        const plate = row.vehicle_info?.plateNumber || 'No Plate';
-                        const company = row.vehicle_info?.company || '';
                         const dateFormatted = row.created_at 
                           ? new Date(row.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) 
                           : 'Recent';
@@ -561,104 +1046,99 @@ export default function AdminDashboardPage() {
                         const pdfDirectUrl = row.pdf_url ? `${API_BASE}${row.pdf_url}` : `${API_BASE}/api/reports/${row.inspection_id}/pdf`;
 
                         return (
-                          <tr key={row.inspection_id} className="hover:bg-slate-50/80 transition-colors">
-                            {/* Date & ID */}
-                            <td className="p-3.5">
-                              <span className="font-semibold text-slate-900 block">{dateFormatted}</span>
-                              <span className="text-[10px] text-slate-400 font-mono">{row.inspection_id}</span>
-                            </td>
-
-                            {/* Customer Name & Email */}
-                            <td className="p-3.5">
-                              <span className="font-bold text-slate-900 block">{name}</span>
-                              <span className="text-[11px] text-slate-500 select-all">{email}</span>
-                            </td>
-
-                            {/* VEHICLE DETAILS - COMMENTED OUT PER USER REQUEST
-                            <td className="p-3.5">
-                              <span className="font-medium text-slate-800 block">
-                                {make} {company ? `(${company})` : ''}
-                              </span>
-                              <span className="text-[10px] font-mono font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
-                                {plate}
-                              </span>
-                            </td>
-                            */}
-
-                            {/* Damages Count */}
-                            <td className="p-3.5">
+                          <div 
+                            key={row.inspection_id}
+                            className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between gap-3.5"
+                          >
+                            {/* Card Header: Date & ID + Findings Badge */}
+                            <div className="flex items-start justify-between gap-2 pb-3 border-b border-slate-100">
+                              <div>
+                                <span className="font-bold text-slate-900 text-sm block leading-tight">{dateFormatted}</span>
+                                <span className="text-[10px] text-slate-400 font-mono tracking-wider">{row.inspection_id}</span>
+                              </div>
                               {findingsCount === 0 ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
                                   ✓ Clean Vehicle
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-800 border border-rose-200 shrink-0">
                                   {findingsCount} Defect{findingsCount !== 1 ? 's' : ''}
                                 </span>
                               )}
-                            </td>
+                            </div>
 
-                            {/* Email Dispatched */}
-                            <td className="p-3.5">
-                              {row.email_sent ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                                  <Mail className="w-3 h-3" /> Sent
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">
-                                  Pending
-                                </span>
-                              )}
-                            </td>
+                            {/* Customer Information */}
+                            <div className="flex flex-col gap-1">
+                              <span className="text-xs font-bold text-slate-800">{name}</span>
+                              <span className="text-[11px] text-slate-500 break-all select-all">{email}</span>
+                              <div className="mt-1 flex items-center gap-2">
+                                <span className="text-[10px] text-slate-400 uppercase font-semibold">Email:</span>
+                                {row.email_sent ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                    <Mail className="w-3 h-3" /> Dispatched
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">
+                                    Pending
+                                  </span>
+                                )}
+                              </div>
+                            </div>
 
-                            {/* Report PDF Link */}
-                            <td className="p-3.5">
+                            {/* Action Buttons */}
+                            <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2">
                               <a
                                 href={pdfDirectUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#022a5b] text-white hover:bg-[#022a5b]/90 text-[11px] font-bold shadow-2xs transition-colors cursor-pointer"
+                                className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#022a5b] text-white hover:bg-[#022a5b]/90 text-[11px] font-bold shadow-2xs transition-colors cursor-pointer"
                               >
                                 <Download className="w-3 h-3" />
-                                <span>PDF Certificate</span>
+                                <span>PDF</span>
                               </a>
-                            </td>
-
-                            {/* Uploaded Images Link */}
-                            <td className="p-3.5">
-                              <div className="flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => setSelectedPhotosModal({
-                                    inspectionId: row.inspection_id,
-                                    photos: photosDict,
-                                    vehicleInfo: row.vehicle_info,
-                                    userInfo: row.user_info
-                                  })}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold border border-slate-200 transition-colors cursor-pointer"
-                                  title="Open fast photo viewer popup"
-                                >
-                                  <ImageIcon className="w-3 h-3 text-slate-600" />
-                                  <span>View Photos ({photosCount > 0 ? photosCount : '14'})</span>
-                                </button>
-                                <a
-                                  href={`/admin/photos?id=${row.inspection_id}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-[11px] font-bold border border-sky-200 transition-colors cursor-pointer"
-                                  title="Open high-res full page photo gallery in new tab"
-                                >
-                                  <ExternalLink className="w-3 h-3 text-sky-600" />
-                                  <span>Gallery ↗</span>
-                                </a>
-                              </div>
-                            </td>
-                          </tr>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedPhotosModal({
+                                  inspectionId: row.inspection_id,
+                                  photos: photosDict,
+                                  vehicleInfo: row.vehicle_info,
+                                  userInfo: row.user_info
+                                })}
+                                className="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold border border-slate-200 transition-colors cursor-pointer"
+                                title="Open photo viewer modal"
+                              >
+                                <ImageIcon className="w-3 h-3 text-slate-600" />
+                                <span>Photos ({photosCount > 0 ? photosCount : '14'})</span>
+                              </button>
+                              <a
+                                href={`/admin/photos?id=${row.inspection_id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-[11px] font-bold border border-sky-200 transition-colors cursor-pointer"
+                                title="Open high-res full page photo gallery in new tab"
+                              >
+                                <ExternalLink className="w-3 h-3 text-sky-600" />
+                              </a>
+                            </div>
+                          </div>
                         );
                       })}
-                    </tbody>
-                  </table>
-                </div>
+                    </div>
+                  )}
+
+                  {/* SHADCN PAGINATION CONTROLS (RESPONSIVE: DESKTOP, TABLET & MOBILE) */}
+                  <AdminTablePagination
+                    currentPage={reportsCurrentPage}
+                    totalPages={totalReportsPages}
+                    totalItems={filteredInspections.length}
+                    startIndex={reportsStartIndex}
+                    endIndex={reportsEndIndex}
+                    pageSize={reportsPageSize}
+                    onPageChange={setReportsCurrentPage}
+                    onPageSizeChange={setReportsPageSize}
+                    itemLabel="reports"
+                  />
+                </>
               )}
             </div>
 
@@ -677,15 +1157,47 @@ export default function AdminDashboardPage() {
                 </p>
               </div>
 
-              {searchTerm && (
-                <button
-                  type="button"
-                  onClick={() => setSearchTerm('')}
-                  className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
-                >
-                  Clear Search
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {/* View Mode Toggle: Table vs Cards (Hidden on mobile & tablet, visible on desktop) */}
+                <div className="hidden lg:flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleViewMode('table')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      viewMode === 'table'
+                        ? 'bg-white text-[#022a5b] shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                    title="Table View"
+                  >
+                    <List className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Table</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleViewMode('cards')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      viewMode === 'cards'
+                        ? 'bg-white text-[#022a5b] shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                    title="Card View"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Cards</span>
+                  </button>
+                </div>
+
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm('')}
+                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-semibold cursor-pointer transition-colors border border-slate-200"
+                  >
+                    Clear Search
+                  </button>
+                )}
+              </div>
             </div>
 
             {filteredInspections.length === 0 ? (
@@ -695,26 +1207,123 @@ export default function AdminDashboardPage() {
                   : 'No client records available yet.'}
               </div>
             ) : (
-              <div role="region" aria-label="Clients directory table" tabIndex={0} className="max-w-full overflow-x-auto mt-2">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-200 text-slate-400 uppercase tracking-wider text-[11px] bg-slate-50/80 font-semibold">
-                      <th className="p-3.5 rounded-l-xl">Client Name & Email</th>
-                      {/* VEHICLE & PLATE - COMMENTED OUT PER USER REQUEST
-                      <th className="p-3.5">Vehicle & Plate</th>
-                      */}
-                      <th className="p-3.5">Inspection Ref</th>
-                      <th className="p-3.5">Date & Time</th>
-                      <th className="p-3.5">Email Status</th>
-                      <th className="p-3.5 rounded-r-xl">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredInspections.map((row) => {
+              <>
+                {viewMode === 'table' ? (
+                  <div role="region" aria-label="Clients directory table" tabIndex={0} className="max-w-full overflow-x-auto mt-2">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-200 text-slate-400 uppercase tracking-wider text-[11px] bg-slate-50/80 font-semibold">
+                          <th className="p-3.5 rounded-l-xl">Client Name & Email</th>
+                          {/* VEHICLE & PLATE - COMMENTED OUT PER USER REQUEST
+                          <th className="p-3.5">Vehicle & Plate</th>
+                          */}
+                          <th className="p-3.5">Inspection Ref</th>
+                          <th className="p-3.5">Date & Time</th>
+                          <th className="p-3.5">Email Status</th>
+                          <th className="p-3.5 rounded-r-xl">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {/* PREVIOUS UNPAGINATED MAPPING (PRESERVED AS COMMENT PER USER INSTRUCTION):
+                        {filteredInspections.map((row) => { ... })}
+                        */}
+                        {paginatedClients.map((row) => {
+                          const name = row.user_info?.name || `${row.user_info?.firstName || ''} ${row.user_info?.surname || ''}`.trim() || 'Valued Client';
+                          const email = row.user_info?.email || 'No email provided';
+                          const make = row.vehicle_info?.makeModel || 'Vehicle';
+                          const plate = row.vehicle_info?.plateNumber || 'No Plate';
+                          const dateFormatted = row.created_at 
+                            ? new Date(row.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) 
+                            : 'Recent';
+                          const pdfDirectUrl = row.pdf_url ? `${API_BASE}${row.pdf_url}` : `${API_BASE}/api/reports/${row.inspection_id}/pdf`;
+                          const photosDict = row.photos || {};
+                          const uniquePhotosList = Array.from(new Set(
+                            Object.values(photosDict)
+                              .map(p => (typeof p === 'string' ? p : p?.url || p?.data || p?.filename))
+                              .filter(Boolean)
+                          ));
+                          const photosCount = uniquePhotosList.length > 0 ? uniquePhotosList.length : Object.keys(photosDict).length;
+
+                          return (
+                            <tr key={row.inspection_id} className="hover:bg-slate-50/80 transition-colors">
+                              <td className="p-3.5">
+                                <span className="font-bold text-slate-900 block">{name}</span>
+                                <span className="text-[11px] text-slate-500 select-all">{email}</span>
+                              </td>
+                              {/* VEHICLE & PLATE - COMMENTED OUT PER USER REQUEST
+                              <td className="p-3.5">
+                                <span className="font-medium text-slate-800 block">{make}</span>
+                                <span className="text-[10px] font-mono font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                                  {plate}
+                                </span>
+                              </td>
+                              */}
+                              <td className="p-3.5 font-mono text-[11px] text-slate-600 font-semibold">
+                                {row.inspection_id}
+                              </td>
+                              <td className="p-3.5 text-slate-600">
+                                {dateFormatted}
+                              </td>
+                              <td className="p-3.5">
+                                {row.email_sent ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                    <Mail className="w-3 h-3" /> Dispatched
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">
+                                    Pending
+                                  </span>
+                                )}
+                              </td>
+                              <td className="p-3.5">
+                                <div className="flex items-center gap-2">
+                                  <a
+                                    href={pdfDirectUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#022a5b] text-white hover:bg-[#022a5b]/90 text-[10px] font-bold shadow-2xs transition-colors cursor-pointer"
+                                  >
+                                    <Download className="w-2.5 h-2.5" />
+                                    <span>PDF</span>
+                                  </a>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedPhotosModal({
+                                      inspectionId: row.inspection_id,
+                                      photos: photosDict,
+                                      vehicleInfo: row.vehicle_info,
+                                      userInfo: row.user_info
+                                    })}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold border border-slate-200 transition-colors cursor-pointer"
+                                    title="Open photos popup"
+                                  >
+                                    <ImageIcon className="w-2.5 h-2.5 text-slate-600" />
+                                    <span>Photos ({photosCount})</span>
+                                  </button>
+                                  <a
+                                    href={`/admin/photos?id=${row.inspection_id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 text-[10px] font-bold border border-sky-200 transition-colors cursor-pointer"
+                                    title="Open full gallery in new tab"
+                                  >
+                                    <ExternalLink className="w-2.5 h-2.5 text-sky-600" />
+                                    <span>Gallery ↗</span>
+                                  </a>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  /* ── RESPONSIVE CARD VIEW FOR CLIENTS ON MOBILE, TABLET & DESKTOP ── */
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mt-2">
+                    {paginatedClients.map((row) => {
                       const name = row.user_info?.name || `${row.user_info?.firstName || ''} ${row.user_info?.surname || ''}`.trim() || 'Valued Client';
                       const email = row.user_info?.email || 'No email provided';
-                      const make = row.vehicle_info?.makeModel || 'Vehicle';
-                      const plate = row.vehicle_info?.plateNumber || 'No Plate';
                       const dateFormatted = row.created_at 
                         ? new Date(row.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) 
                         : 'Recent';
@@ -728,80 +1337,90 @@ export default function AdminDashboardPage() {
                       const photosCount = uniquePhotosList.length > 0 ? uniquePhotosList.length : Object.keys(photosDict).length;
 
                       return (
-                        <tr key={row.inspection_id} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="p-3.5">
-                            <span className="font-bold text-slate-900 block">{name}</span>
-                            <span className="text-[11px] text-slate-500 select-all">{email}</span>
-                          </td>
-                          {/* VEHICLE & PLATE - COMMENTED OUT PER USER REQUEST
-                          <td className="p-3.5">
-                            <span className="font-medium text-slate-800 block">{make}</span>
-                            <span className="text-[10px] font-mono font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
-                              {plate}
-                            </span>
-                          </td>
-                          */}
-                          <td className="p-3.5 font-mono text-[11px] text-slate-600 font-semibold">
-                            {row.inspection_id}
-                          </td>
-                          <td className="p-3.5 text-slate-600">
-                            {dateFormatted}
-                          </td>
-                          <td className="p-3.5">
+                        <div 
+                          key={row.inspection_id}
+                          className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between gap-3.5"
+                        >
+                          {/* Card Header: Client Name & Email Status */}
+                          <div className="flex items-start justify-between gap-2 pb-3 border-b border-slate-100">
+                            <div>
+                              <span className="font-bold text-slate-900 text-sm block leading-tight">{name}</span>
+                              <span className="text-[11px] text-slate-500 break-all select-all">{email}</span>
+                            </div>
                             {row.email_sent ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                                <Mail className="w-3 h-3" /> Dispatched
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 shrink-0">
+                                <Mail className="w-3 h-3" /> Sent
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 shrink-0">
                                 Pending
                               </span>
                             )}
-                          </td>
-                          <td className="p-3.5">
-                            <div className="flex items-center gap-2">
-                              <a
-                                href={pdfDirectUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#022a5b] text-white hover:bg-[#022a5b]/90 text-[10px] font-bold shadow-2xs transition-colors cursor-pointer"
-                              >
-                                <Download className="w-2.5 h-2.5" />
-                                <span>PDF</span>
-                              </a>
-                              <button
-                                type="button"
-                                onClick={() => setSelectedPhotosModal({
-                                  inspectionId: row.inspection_id,
-                                  photos: photosDict,
-                                  vehicleInfo: row.vehicle_info,
-                                  userInfo: row.user_info
-                                })}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold border border-slate-200 transition-colors cursor-pointer"
-                                title="Open photos popup"
-                              >
-                                <ImageIcon className="w-2.5 h-2.5 text-slate-600" />
-                                <span>Photos ({photosCount})</span>
-                              </button>
-                              <a
-                                href={`/admin/photos?id=${row.inspection_id}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 text-[10px] font-bold border border-sky-200 transition-colors cursor-pointer"
-                                title="Open full gallery in new tab"
-                              >
-                                <ExternalLink className="w-2.5 h-2.5 text-sky-600" />
-                                <span>Gallery ↗</span>
-                              </a>
-                            </div>
-                          </td>
-                        </tr>
+                          </div>
+
+                          {/* Ref ID & Timestamp */}
+                          <div className="flex items-center justify-between text-xs text-slate-600">
+                            <span className="font-mono text-[11px] text-slate-700 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                              {row.inspection_id}
+                            </span>
+                            <span className="text-[11px] text-slate-400">{dateFormatted}</span>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                            <a
+                              href={pdfDirectUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 min-w-[80px] inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl bg-[#022a5b] text-white hover:bg-[#022a5b]/90 text-[11px] font-bold shadow-2xs transition-colors cursor-pointer"
+                            >
+                              <Download className="w-3 h-3" />
+                              <span>PDF</span>
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedPhotosModal({
+                                inspectionId: row.inspection_id,
+                                photos: photosDict,
+                                vehicleInfo: row.vehicle_info,
+                                userInfo: row.user_info
+                              })}
+                              className="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold border border-slate-200 transition-colors cursor-pointer"
+                              title="Open photos popup"
+                            >
+                              <ImageIcon className="w-3 h-3 text-slate-600" />
+                              <span>Photos ({photosCount})</span>
+                            </button>
+                            <a
+                              href={`/admin/photos?id=${row.inspection_id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-[11px] font-bold border border-sky-200 transition-colors cursor-pointer"
+                              title="Open full gallery in new tab"
+                            >
+                              <ExternalLink className="w-3 h-3 text-sky-600" />
+                            </a>
+                          </div>
+                        </div>
                       );
                     })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                  </div>
+                )}
+
+                {/* SHADCN PAGINATION CONTROLS FOR CLIENTS (RESPONSIVE: DESKTOP, TABLET & MOBILE) */}
+                <AdminTablePagination
+                  currentPage={clientsCurrentPage}
+                  totalPages={totalClientsPages}
+                totalItems={filteredInspections.length}
+                startIndex={clientsStartIndex}
+                endIndex={clientsEndIndex}
+                pageSize={clientsPageSize}
+                onPageChange={setClientsCurrentPage}
+                onPageSizeChange={setClientsPageSize}
+                itemLabel="clients"
+              />
+            </>
+          )}
           </div>
         )}
 
