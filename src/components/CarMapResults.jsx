@@ -19,17 +19,17 @@ const getSanitizedVehiclePart = (item) => {
     'IMAGE_01': 'Front Bumper',
     'IMAGE_02': 'Windshield & Hood',
     'IMAGE_03': 'Front Left Corner',
-    'IMAGE_04': 'Driver Door',
-    'IMAGE_05': 'Rear Left Corner',
-    'IMAGE_06': 'Rear Bumper',
-    'IMAGE_07': 'Rear Windshield',
-    'IMAGE_08': 'Rear Right Corner',
-    'IMAGE_09': 'Passenger Door',
-    'IMAGE_10': 'Front Right Corner',
-    'IMAGE_11': 'Front Left Wheel',
-    'IMAGE_12': 'Rear Left Wheel',
-    'IMAGE_13': 'Rear Right Wheel',
-    'IMAGE_14': 'Front Right Wheel'
+    'IMAGE_04': 'Front Left Wheel',
+    'IMAGE_05': 'Driver Door',
+    'IMAGE_06': 'Rear Left Wheel',
+    'IMAGE_07': 'Rear Left Corner',
+    'IMAGE_08': 'Rear Bumper',
+    'IMAGE_09': 'Rear Windshield',
+    'IMAGE_10': 'Rear Right Corner',
+    'IMAGE_11': 'Rear Right Wheel',
+    'IMAGE_12': 'Passenger Door',
+    'IMAGE_13': 'Front Right Wheel',
+    'IMAGE_14': 'Front Right Corner'
   };
 
   if (paddedKey === 'IMAGE_02') {
@@ -51,17 +51,18 @@ const getSanitizedVehiclePart = (item) => {
     desc.includes('rear') || 
     desc.includes('back') || 
     (desc.includes('passenger door') && !desc.includes('front passenger')) ||
-    (paddedKey === 'IMAGE_04' && boxXCenter > 520);
+    (paddedKey === 'IMAGE_05' && boxXCenter > 520);
 
-  if (paddedKey === 'IMAGE_04' || currentPart.includes('driver_door')) {
+  if (paddedKey === 'IMAGE_05' || currentPart.includes('driver_door')) {
     return isRearDoor ? 'Driver Rear Door' : 'Driver Front Door';
   }
 
-  if (paddedKey === 'IMAGE_09' || currentPart.includes('passenger_door')) {
+  if (paddedKey === 'IMAGE_12' || currentPart.includes('passenger_door')) {
     return isRearDoor ? 'Passenger Rear Door' : 'Passenger Front Door';
   }
 
-  if (paddedNum < 11) {
+  const wheelKeys = ['IMAGE_04', 'IMAGE_06', 'IMAGE_11', 'IMAGE_13'];
+  if (!wheelKeys.includes(paddedKey)) {
     if (currentPart.includes('wheel') || currentPart.includes('rim')) {
       return ANGLE_LABEL_MAP[paddedKey] || 'Vehicle Panel';
     }
@@ -226,9 +227,9 @@ function getResolvedCarPins(findings) {
       const partHasRear = part.includes('rear') || part.includes('back');
       const partHasFront = part.includes('front');
 
-      // For side profile photos (IMAGE_04 driver side):
+      // For side profile photos (IMAGE_05 driver side):
       // front door is left (boxXCenter < 520), rear door is right (boxXCenter > 520)
-      const boxImpliesRear = (suppImg === 'IMAGE_04' && boxXCenter > 520) || suppImg === 'IMAGE_05' || suppImg === 'IMAGE_08';
+      const boxImpliesRear = (suppImg === 'IMAGE_05' && boxXCenter > 520) || suppImg === 'IMAGE_07' || suppImg === 'IMAGE_10';
 
       const isRear = partHasRear || descHasRear || (!partHasFront && !descHasFront && boxImpliesRear);
 
