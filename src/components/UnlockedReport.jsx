@@ -662,7 +662,7 @@ export default function UnlockedReport({
                     localStorage.removeItem('carsinsure_user_name');
                     localStorage.removeItem('carsinsure_user_email');
                   } catch (e) {}
-                  window.location.href = '/';
+                  window.location.href = '/car-rental-damage-scanner/';
                 }
               }}
               className="w-full sm:w-auto h-12 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors"

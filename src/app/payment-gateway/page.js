@@ -54,7 +54,7 @@ function PaymentGatewayContent() {
       
       // Redirect back to main application with verified payment parameter
       setTimeout(() => {
-        window.location.href = `/?inspectionId=${encodeURIComponent(inspectionId)}&payment=success&PrivateSaleToken=tok_${Date.now()}`;
+        window.location.href = `/car-rental-damage-scanner/?inspectionId=${encodeURIComponent(inspectionId)}&payment=success&PrivateSaleToken=tok_${Date.now()}`;
       }, 600);
 
     } catch (err) {

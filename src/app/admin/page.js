@@ -454,7 +454,7 @@ export default function AdminDashboardPage() {
       const findingsCount = (i.findings || []).length;
       const emailSent = i.email_sent ? 'YES' : 'NO';
       const pdfUrl = i.pdf_url ? `${API_BASE}${i.pdf_url}` : `${API_BASE}/api/reports/${i.inspection_id}/pdf`;
-      const photosGalleryUrl = `${origin}/admin/photos?id=${i.inspection_id}`;
+      const photosGalleryUrl = `${origin}/car-rental-damage-scanner/admin/photos?id=${i.inspection_id}`;
       return [
         `"${i.inspection_id}"`,
         `"${date}"`,
@@ -564,7 +564,7 @@ export default function AdminDashboardPage() {
               <Eye className="w-3 h-3 text-slate-600" />
               <span>View Photos ({photosCount > 0 ? photosCount : '14'})</span>
             </button>
-            <a
+            <Link
               href={`/admin/photos?id=${row.inspection_id}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -573,7 +573,7 @@ export default function AdminDashboardPage() {
             >
               <span>Gallery</span>
               <ExternalLink className="w-3 h-3" />
-            </a>
+            </Link>
           </div>
         </td>
       </tr>
@@ -659,7 +659,7 @@ export default function AdminDashboardPage() {
             <ImageIcon className="w-3 h-3 text-slate-600" />
             <span>Photos ({photosCount > 0 ? photosCount : '14'})</span>
           </button>
-          <a
+          <Link
             href={`/admin/photos?id=${row.inspection_id}`}
             target="_blank"
             rel="noopener noreferrer"
@@ -667,7 +667,7 @@ export default function AdminDashboardPage() {
             title="Open high-res full page photo gallery in new tab"
           >
             <ExternalLink className="w-3 h-3 text-sky-600" />
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -1764,7 +1764,7 @@ export default function AdminDashboardPage() {
                                       <ImageIcon className="w-3 h-3 text-slate-600" />
                                       <span>View Photos ({photosCount > 0 ? photosCount : '14'})</span>
                                     </button>
-                                    <a
+                                    <Link
                                       href={`/admin/photos?id=${row.inspection_id}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
@@ -1773,7 +1773,7 @@ export default function AdminDashboardPage() {
                                     >
                                       <ExternalLink className="w-3 h-3 text-sky-600" />
                                       <span>Gallery ↗</span>
-                                    </a>
+                                    </Link>
                                   </div>
                                 </td>
                               </tr>
@@ -1865,7 +1865,7 @@ export default function AdminDashboardPage() {
                                 <ImageIcon className="w-3 h-3 text-slate-600" />
                                 <span>Photos ({photosCount > 0 ? photosCount : '14'})</span>
                               </button>
-                              <a
+                              <Link
                                 href={`/admin/photos?id=${row.inspection_id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -1873,7 +1873,7 @@ export default function AdminDashboardPage() {
                                 title="Open high-res full page photo gallery in new tab"
                               >
                                 <ExternalLink className="w-3 h-3 text-sky-600" />
-                              </a>
+                              </Link>
                             </div>
                           </div>
                         );
@@ -2174,7 +2174,7 @@ export default function AdminDashboardPage() {
                                                 </div>
 
                                                 <div className="w-[88px] shrink-0 text-left">
-                                                  <a
+                                                  <Link
                                                     href={`/admin/photos?id=${insp.inspection_id}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
@@ -2183,7 +2183,7 @@ export default function AdminDashboardPage() {
                                                   >
                                                     <ExternalLink className="w-3 h-3 text-sky-600" />
                                                     <span>Gallery ↗</span>
-                                                  </a>
+                                                  </Link>
                                                 </div>
                                               </div>
                                             </div>
@@ -2340,7 +2340,7 @@ export default function AdminDashboardPage() {
                                           <ImageIcon className="w-2.5 h-2.5 shrink-0 text-slate-600" />
                                           <span className="truncate">({photosCount > 0 ? photosCount : '14'})</span>
                                         </button>
-                                        <a
+                                        <Link
                                           href={`/admin/photos?id=${insp.inspection_id}`}
                                           target="_blank"
                                           rel="noopener noreferrer"
@@ -2349,7 +2349,7 @@ export default function AdminDashboardPage() {
                                         >
                                           <ExternalLink className="w-2.5 h-2.5 shrink-0 text-sky-600" />
                                           <span>Gallery</span>
-                                        </a>
+                                        </Link>
                                       </div>
                                     </div>
                                   );
