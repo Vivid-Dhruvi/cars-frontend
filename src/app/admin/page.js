@@ -690,7 +690,7 @@ export default function AdminDashboardPage() {
         <div className="w-full max-w-md bg-white rounded-3xl p-8 border border-slate-200 shadow-xl flex flex-col gap-6">
           <div className="flex flex-col items-center text-center gap-2">
             <img 
-              src="/logo-ai.svg?v=5" 
+              src="/car-rental-damage-scanner/logo-ai.svg?v=5" 
               alt="CarInsuRent AI" 
               className="h-8 sm:h-9 w-auto object-contain shrink-0" 
             />
@@ -785,7 +785,7 @@ export default function AdminDashboardPage() {
           </button>
           <div className="flex items-center gap-2">
             <img 
-              src="/logo-ai.svg?v=5" 
+              src="/car-rental-damage-scanner/logo-ai.svg?v=5" 
               alt="CarInsuRent" 
               className="h-5 sm:h-6 w-auto object-contain shrink-0" 
             />
@@ -830,7 +830,7 @@ export default function AdminDashboardPage() {
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <img 
-                    src="/logo-ai.svg?v=5" 
+                    src="/car-rental-damage-scanner/logo-ai.svg?v=5" 
                     alt="CarInsuRent" 
                     className="h-5 sm:h-6 w-auto object-contain shrink-0" 
                   />
@@ -930,7 +930,7 @@ export default function AdminDashboardPage() {
             <div className="flex flex-col gap-1 pb-4 border-b border-slate-100">
               <div className="flex items-center">
                 <img 
-                  src="/logo-ai.svg?v=5" 
+                  src="/car-rental-damage-scanner/logo-ai.svg?v=5" 
                   alt="CarInsuRent AI" 
                   className="h-5.5 w-auto object-contain shrink-0" 
                 />
@@ -995,7 +995,7 @@ export default function AdminDashboardPage() {
             {/* Collapsed Top Header: Logo Icon Only */}
             <div className="flex items-center justify-center pb-3.5 border-b border-slate-100 w-full">
               <div className="w-8 h-8 overflow-hidden shrink-0 flex items-center justify-start rounded-lg" title="CarInsuRent AI">
-                <img src="/logo-ai.svg?v=5" alt="CarInsuRent AI" className="h-6 w-auto max-w-none" />
+                <img src="/car-rental-damage-scanner/logo-ai.svg?v=5" alt="CarInsuRent AI" className="h-6 w-auto max-w-none" />
               </div>
             </div>
 

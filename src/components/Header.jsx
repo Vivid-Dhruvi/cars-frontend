@@ -28,7 +28,7 @@ export default function Header({ setCurrentStep, currentStep }) {
         onClick={handleLogoClick}
       >
         <img 
-          src="/logo-ai.svg?v=5" 
+          src="/car-rental-damage-scanner/logo-ai.svg?v=5" 
           alt="CarInsuRent AI" 
           className="h-5 sm:h-[26px] w-auto object-contain shrink-0" 
         />

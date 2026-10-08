@@ -47,7 +47,7 @@ function useHasCamera() {
 }
 
 const getExampleImage = (id) => {
-  return `/examples/IMAGE_${id}.png`;
+  return `/car-rental-damage-scanner/examples/IMAGE_${id}.png`;
 };
 
 const ANGLES = [

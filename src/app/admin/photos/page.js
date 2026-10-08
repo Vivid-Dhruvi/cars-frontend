@@ -144,7 +144,7 @@ function PhotosGalleryContent() {
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <img 
-              src="/logo-ai.svg?v=5" 
+              src="/car-rental-damage-scanner/logo-ai.svg?v=5" 
               alt="CarInsuRent" 
               className="h-6 w-auto object-contain shrink-0 hidden sm:block" 
             />
