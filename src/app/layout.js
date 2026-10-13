@@ -38,6 +38,7 @@ export const metadata = {
     description:
       "Instant AI damage detection for rental cars. Document vehicle condition before leaving the rental lot.",
   },
+
   robots: {
     index: true,
     follow: true,
@@ -86,6 +87,11 @@ export default function RootLayout({ children }) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
+        <link rel="icon" href="/car-rental-damage-scanner/favicon.ico" sizes="any" />
+        <link rel="icon" href="/car-rental-damage-scanner/icon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/car-rental-damage-scanner/favicon-32x32.png" type="image/png" sizes="32x32" />
+        <link rel="icon" href="/car-rental-damage-scanner/favicon-16x16.png" type="image/png" sizes="16x16" />
+        <link rel="apple-touch-icon" href="/car-rental-damage-scanner/apple-touch-icon.png" sizes="180x180" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
