@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import * as yup from 'yup';
-import { Camera, Image as ImageIcon, Check, AlertCircle, Loader2, ChevronRight, ShieldCheck, User, Mail, AlertTriangle } from 'lucide-react';
+import { Camera, Image as ImageIcon, Check, AlertCircle, Loader2, ChevronRight, ChevronDown, ChevronUp, ShieldCheck, User, Mail, AlertTriangle, Sun, Sparkles, ZapOff, RotateCw } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 
 export const leadFormSchema = yup.object().shape({
@@ -82,6 +82,7 @@ export default function PhotoChecklist({
 }) {
   const hasCamera = useHasCamera();
   const [flippedCard, setFlippedCard] = useState(null);
+  const [showGuidelines, setShowGuidelines] = useState(false);
   const progress = Math.round((capturedCount / 14) * 100);
 
   const [touched, setTouched] = useState({
@@ -166,38 +167,243 @@ export default function PhotoChecklist({
     <>
       <div className="flex flex-col gap-4 sm:gap-5">
       {/* ── Rich Visible #022a5b Midnight Navy Hero Guidance Banner ── */}
-      <div className="gradient-navy-hero rounded-2xl sm:rounded-3xl p-4 sm:p-8 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 relative overflow-hidden isolate">
+      <div className="gradient-navy-hero rounded-2xl sm:rounded-3xl p-4 sm:p-7 text-white shadow-md flex flex-col gap-4 sm:gap-6 relative overflow-hidden isolate">
         {/* Glow ambient highlight */}
         <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none translate-x-1/4 -translate-y-1/4" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-300/15 rounded-full blur-2xl pointer-events-none -translate-x-1/4 translate-y-1/4" />
         
-        <div className="space-y-2 relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-blue-100 text-xs font-bold border border-white/20 backdrop-blur-md">
-            <ShieldCheck className="w-3.5 h-3.5 text-blue-200" />
-            <span>Standardized 14-Angle Protocol</span>
+        {/* Main Header Row */}
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 sm:gap-6 relative z-10">
+          <div className="space-y-2 flex-1">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-blue-100 text-xs font-bold border border-white/20 backdrop-blur-md">
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-200" />
+              <span>Standardized 14-Angle Protocol</span>
+            </div>
+
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-white leading-tight">
+              Detailed guidelines for AI-driven visual inspection
+            </h1>
+            <div className="text-blue-100/90 text-xs sm:text-sm max-w-2xl leading-relaxed space-y-1">
+              <p>
+                To ensure the most accurate, reliable, and automated physical damage analysis, it is recommended to follow a structured, standardized photography protocol.
+              </p>
+              <p className="font-semibold text-white/95">
+                Here are the detailed guidelines optimized for AI-driven visual inspection:
+              </p>
+            </div>
+
+            {/* Expand / Collapse Button (Consistent label, no jumping, no "(3 step)" text) */}
+            <div className="pt-1.5">
+              <button
+                type="button"
+                onClick={() => setShowGuidelines(prev => !prev)}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs sm:text-sm font-bold border border-white/30 backdrop-blur-md transition-all cursor-pointer shadow-xs active:scale-98"
+                aria-expanded={showGuidelines}
+              >
+                <span>{showGuidelines ? 'Hide Photography Guidelines' : 'View Photography Guidelines'}</span>
+                {showGuidelines ? <ChevronUp className="w-4 h-4 text-blue-200" /> : <ChevronDown className="w-4 h-4 text-blue-200" />}
+              </button>
+            </div>
           </div>
 
-          <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">
-            Vehicle Photo Checklist
-          </h1>
-          <p className="text-blue-100/90 text-xs sm:text-sm max-w-xl leading-relaxed">
-            Capture or upload clear photos for each designated angle. Our AI computer vision model inspects panels, bumpers, glass, and wheels.
-          </p>
+          {/* Metric Overview Card */}
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0 bg-white/15 backdrop-blur-md p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-white/20 self-start md:self-auto shadow-xs">
+            <div className="text-left px-1.5 sm:px-2">
+              <span className="text-xl sm:text-2xl font-black text-white">{capturedCount}</span>
+              <span className="text-blue-200 text-xs font-bold"> / 14</span>
+              <span className="block text-[10px] text-blue-200 uppercase tracking-wider font-semibold">Completed</span>
+            </div>
+            <div className="w-px h-8 bg-white/20" />
+            <div className="text-left px-1.5 sm:px-2">
+              <span className="text-xl sm:text-2xl font-black text-white">{progress}%</span>
+              <span className="block text-[10px] text-blue-200 uppercase tracking-wider font-semibold">Coverage</span>
+            </div>
+          </div>
         </div>
 
-        {/* Metric Overview Card */}
-        <div className="flex items-center gap-3 sm:gap-4 shrink-0 bg-white/15 backdrop-blur-md p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-white/20 relative z-10 self-start sm:self-auto">
-          <div className="text-left px-1.5 sm:px-2">
-            <span className="text-xl sm:text-2xl font-black text-white">{capturedCount}</span>
-            <span className="text-blue-200 text-xs font-bold"> / 14</span>
-            <span className="block text-[10px] text-blue-200 uppercase tracking-wider font-semibold">Completed</span>
+        {/* ── Collapsible Structured Guidelines Content (100% Verbatim & Beautifully Balanced) ── */}
+        {showGuidelines && (
+          <div className="relative z-10 pt-5 border-t border-white/20 text-blue-50 text-xs sm:text-sm space-y-5 animate-in fade-in duration-300">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 items-stretch">
+              
+              {/* 1. Environmental & Vehicle Preparation */}
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-white/20 shadow-md flex flex-col justify-between hover:bg-white/15 transition-colors">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2.5 pb-2.5 border-b border-white/15">
+                    <span className="w-7 h-7 rounded-xl bg-white/20 text-white text-xs font-black flex items-center justify-center shrink-0 shadow-xs">
+                      1
+                    </span>
+                    <div>
+                      <h3 className="text-sm sm:text-base font-bold text-white leading-tight">
+                        Environmental &amp; Vehicle Preparation
+                      </h3>
+                      <span className="text-[10px] text-blue-200 font-medium">Pre-inspection setup</span>
+                    </div>
+                  </div>
+
+                  <ul className="space-y-3 text-blue-100/95 text-xs leading-relaxed">
+                    <li className="bg-white/5 rounded-xl p-3 border border-white/10">
+                      <strong className="text-white block font-bold mb-1 flex items-center gap-1.5">
+                        <Sun className="w-3.5 h-3.5 text-amber-300" /> Lighting:
+                      </strong> 
+                      Park the vehicle in uniform lighting (ideally outdoors on an overcast day or under bright, even facility lighting). Avoid direct, harsh sunlight or deep tree shadows, as they create high-contrast lines that can be misidentified as scratches or cracks.
+                    </li>
+                    <li className="bg-white/5 rounded-xl p-3 border border-white/10">
+                      <strong className="text-white block font-bold mb-1 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-sky-300" /> Cleanliness:
+                      </strong> 
+                      Ensure the vehicle is clean. Heavy dirt, mud splatters, or water droplets mask true paint damage and trigger false positives.
+                    </li>
+                    <li className="bg-white/5 rounded-xl p-3 border border-white/10">
+                      <strong className="text-white block font-bold mb-1 flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" /> Positioning:
+                      </strong> 
+                      Park the vehicle on a level surface away from tight obstacles to allow full-body walkarounds.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* 2. The 360-Degree Standard Capture Method */}
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-white/20 shadow-md flex flex-col justify-between hover:bg-white/15 transition-colors">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2.5 pb-2.5 border-b border-white/15">
+                    <span className="w-7 h-7 rounded-xl bg-white/20 text-white text-xs font-black flex items-center justify-center shrink-0 shadow-xs">
+                      2
+                    </span>
+                    <div>
+                      <h3 className="text-sm sm:text-base font-bold text-white leading-tight">
+                        The 360-Degree Standard Capture Method
+                      </h3>
+                      <span className="text-[10px] text-blue-200 font-medium">14 foundational angles</span>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-blue-200 font-medium italic leading-relaxed">
+                    Inspectors must capture a minimum of 14 foundational angles to ensure overlapping visual continuity without leaving dead zones (blind spots).
+                  </p>
+
+                  <div className="space-y-2.5 text-xs text-blue-100/95 leading-relaxed">
+                    {/* Corners */}
+                    <div className="bg-white/5 rounded-xl p-3 border border-white/10 space-y-1.5">
+                      <strong className="text-white block font-bold">
+                        • The Four Corner Angle Views (3/4 Views):
+                      </strong>
+                      <p className="text-[11px] text-blue-100/90">
+                        Stand at a 45-degree angle from each corner of the car, approximately 3-4 feet back (1-1.2 meter). Ensure you capture two full sides in one frame.
+                      </p>
+                      <div className="grid grid-cols-2 gap-1.5 pt-1 text-[10px] font-semibold text-blue-100">
+                        <span className="bg-white/10 px-2 py-1 rounded-lg border border-white/10">Front-Left (Driver)</span>
+                        <span className="bg-white/10 px-2 py-1 rounded-lg border border-white/10">Front-Right (Passenger)</span>
+                        <span className="bg-white/10 px-2 py-1 rounded-lg border border-white/10">Rear-Left Corner</span>
+                        <span className="bg-white/10 px-2 py-1 rounded-lg border border-white/10">Rear-Right Corner</span>
+                      </div>
+                    </div>
+
+                    {/* Profiles */}
+                    <div className="bg-white/5 rounded-xl p-3 border border-white/10 space-y-1.5">
+                      <strong className="text-white block font-bold">
+                        • The Four Profile Views:
+                      </strong>
+                      <p className="text-[11px] text-blue-100/90">
+                        Capture flat, straight-on shots of the major faces.
+                      </p>
+                      <div className="grid grid-cols-2 gap-1.5 pt-1 text-[10px] font-semibold text-blue-100">
+                        <span className="bg-white/10 px-2 py-1 rounded-lg border border-white/10">Direct Front Face</span>
+                        <span className="bg-white/10 px-2 py-1 rounded-lg border border-white/10">Direct Rear Face</span>
+                        <span className="bg-white/10 px-2 py-1 rounded-lg border border-white/10">Left Profile</span>
+                        <span className="bg-white/10 px-2 py-1 rounded-lg border border-white/10">Right Profile</span>
+                      </div>
+                    </div>
+
+                    {/* Wheels & Glass */}
+                    <div className="bg-white/5 rounded-xl p-3 border border-white/10 space-y-2">
+                      <div>
+                        <strong className="text-white block font-bold">
+                          • Wheels and Rims:
+                        </strong>
+                        <p className="text-[11px] text-blue-100/90 mt-0.5">
+                          Take a straight-on, dedicated shot of each wheel. Avoid capturing wheels from sharp side angles, as curb rash on the rims or hubcap clips can become hidden behind tire bulges.
+                        </p>
+                        <ul className="text-[10px] text-blue-200 mt-1 space-y-0.5 pl-2 border-l border-white/20">
+                          <li>– Do not shoot the wheel while standing up.</li>
+                          <li>– Inspectors must crouch down parallel to wheel hub.</li>
+                          <li>– Capture straight-on to prevent tire blocking view.</li>
+                        </ul>
+                      </div>
+
+                      <div className="pt-2 border-t border-white/10">
+                        <strong className="text-white block font-bold">
+                          • Windshield and Glass:
+                        </strong>
+                        <p className="text-[11px] text-blue-100/90 mt-0.5">
+                          Capture the windshield from the front and the front-quarters. To help identify glass chips or bullseye cracks, avoid catching high-contrast sky reflections on the glass panel.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Camera Settings & Technical Quality */}
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-white/20 shadow-md flex flex-col justify-between hover:bg-white/15 transition-colors">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2.5 pb-2.5 border-b border-white/15">
+                    <span className="w-7 h-7 rounded-xl bg-white/20 text-white text-xs font-black flex items-center justify-center shrink-0 shadow-xs">
+                      3
+                    </span>
+                    <div>
+                      <h3 className="text-sm sm:text-base font-bold text-white leading-tight">
+                        Camera Settings &amp; Technical Quality
+                      </h3>
+                      <span className="text-[10px] text-blue-200 font-medium">Image resolution &amp; clarity</span>
+                    </div>
+                  </div>
+
+                  <ul className="space-y-3 text-blue-100/95 text-xs leading-relaxed">
+                    <li className="bg-white/5 rounded-xl p-3 border border-white/10">
+                      <strong className="text-white block font-bold mb-1 flex items-center gap-1.5">
+                        <Camera className="w-3.5 h-3.5 text-sky-300" /> Image Quality:
+                      </strong> 
+                      Set the device to a minimum resolution of 12 Megapixels. Images must be sharp and in clear focus.
+                    </li>
+                    <li className="bg-white/5 rounded-xl p-3 border border-white/10">
+                      <strong className="text-white block font-bold mb-1 flex items-center gap-1.5">
+                        <RotateCw className="w-3.5 h-3.5 text-emerald-300" /> Stability:
+                      </strong> 
+                      Avoid fast moving shots that cause motion blur. Blurry images will be rejected as insufficient_quality.
+                    </li>
+                    <li className="bg-white/5 rounded-xl p-3 border border-white/10">
+                      <strong className="text-white block font-bold mb-1 flex items-center gap-1.5">
+                        <ZapOff className="w-3.5 h-3.5 text-rose-300" /> Flash Usage:
+                      </strong> 
+                      Do not use a camera flash unless inspecting in complete darkness (such as an undercarriage or interior floor). A camera flash creates a distinct white hot-spot reflection that blinds the AI&apos;s ability to see minor surface scratches.
+                    </li>
+                    <li className="bg-white/5 rounded-xl p-3 border border-white/10">
+                      <strong className="text-white block font-bold mb-1 flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-amber-300" /> Wipe the Lens:
+                      </strong> 
+                      Mobile lenses constantly collect finger oil. Inspectors must wipe the lens cover before starting an inspection to prevent foggy, low-contrast images that trigger an insufficient_quality flag.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Bottom Close Button for Mobile convenience */}
+            <div className="pt-2 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowGuidelines(false)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white/90 text-xs font-semibold border border-white/20 transition-all cursor-pointer"
+              >
+                <ChevronUp className="w-3.5 h-3.5" />
+                <span>Close Guidelines</span>
+              </button>
+            </div>
           </div>
-          <div className="w-px h-8 bg-white/20" />
-          <div className="text-left px-1.5 sm:px-2">
-            <span className="text-xl sm:text-2xl font-black text-white">{progress}%</span>
-            <span className="block text-[10px] text-blue-200 uppercase tracking-wider font-semibold">Coverage</span>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* ── Photo Grid Card ── */}
