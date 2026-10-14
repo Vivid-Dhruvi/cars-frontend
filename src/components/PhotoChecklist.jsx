@@ -172,12 +172,28 @@ export default function PhotoChecklist({
         <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none translate-x-1/4 -translate-y-1/4" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-300/15 rounded-full blur-2xl pointer-events-none -translate-x-1/4 translate-y-1/4" />
         
-        {/* Main Header Row */}
+        {/* Desktop Layout: Left side has Badge, Title, Text, Button. Right side has Metric Overview Card */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 sm:gap-6 relative z-10">
-          <div className="space-y-2 flex-1">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-blue-100 text-xs font-bold border border-white/20 backdrop-blur-md">
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-200" />
-              <span>Standardized 14-Angle Protocol</span>
+          <div className="space-y-3 flex-1">
+            {/* Standardized 14-Angle Protocol Badge */}
+            <div className="flex items-center justify-between sm:justify-start">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-blue-100 text-xs font-bold border border-white/20 backdrop-blur-md">
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-200" />
+                <span>Standardized 14-Angle Protocol</span>
+              </div>
+            </div>
+
+            {/* Mobile-only Metric Card: Full screen width on mobile for perfect symmetry */}
+            <div className="grid grid-cols-2 md:hidden w-full bg-white/15 backdrop-blur-md p-3 rounded-2xl border border-white/20 shadow-xs">
+              <div className="text-center px-1 border-r border-white/20">
+                <span className="text-xl font-black text-white">{capturedCount}</span>
+                <span className="text-blue-200 text-xs font-bold"> / 14</span>
+                <span className="block text-[10px] text-blue-200 uppercase tracking-wider font-semibold mt-0.5">Completed</span>
+              </div>
+              <div className="text-center px-1">
+                <span className="text-xl font-black text-white">{progress}%</span>
+                <span className="block text-[10px] text-blue-200 uppercase tracking-wider font-semibold mt-0.5">Coverage</span>
+              </div>
             </div>
 
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-white leading-tight">
@@ -192,12 +208,12 @@ export default function PhotoChecklist({
               </p>
             </div>
 
-            {/* Expand / Collapse Button (Consistent label, no jumping, no "(3 step)" text) */}
-            <div className="pt-1.5">
+            {/* Expand / Collapse Button: Full width on mobile for easy tap target */}
+            <div className="pt-1 w-full">
               <button
                 type="button"
                 onClick={() => setShowGuidelines(prev => !prev)}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs sm:text-sm font-bold border border-white/30 backdrop-blur-md transition-all cursor-pointer shadow-xs active:scale-98"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs sm:text-sm font-bold border border-white/30 backdrop-blur-md transition-all cursor-pointer shadow-xs active:scale-98"
                 aria-expanded={showGuidelines}
               >
                 <span>{showGuidelines ? 'Hide Photography Guidelines' : 'View Photography Guidelines'}</span>
@@ -206,8 +222,8 @@ export default function PhotoChecklist({
             </div>
           </div>
 
-          {/* Metric Overview Card */}
-          <div className="flex items-center gap-3 sm:gap-4 shrink-0 bg-white/15 backdrop-blur-md p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-white/20 self-start md:self-auto shadow-xs">
+          {/* Desktop Metric Overview Card: Exactly as it was on desktop */}
+          <div className="hidden md:flex items-center gap-3 sm:gap-4 shrink-0 bg-white/15 backdrop-blur-md p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-white/20 self-start md:self-auto shadow-xs">
             <div className="text-left px-1.5 sm:px-2">
               <span className="text-xl sm:text-2xl font-black text-white">{capturedCount}</span>
               <span className="text-blue-200 text-xs font-bold"> / 14</span>
