@@ -30,7 +30,7 @@ export default function App() {
   const [currentStep, setCurrentStepState] = useState('checklist');
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const paymentProcessedRef = useRef(false);
-  
+
   // Navigation wrapper that updates state and keeps browser history in sync
   const setCurrentStep = useCallback((newStep, pushHistory = true) => {
     setCurrentStepState(newStep);
@@ -40,7 +40,7 @@ export default function App() {
         if (pushHistory) {
           window.history.pushState({ step: newStep }, '', window.location.pathname);
         }
-      } catch (e) {}
+      } catch (e) { }
     }
   }, []);
 
@@ -79,7 +79,7 @@ export default function App() {
       localStorage.removeItem('carsinsure_vehicle_data');
       localStorage.removeItem('carsinsure_user_name');
       localStorage.removeItem('carsinsure_user_email');
-    } catch (e) {}
+    } catch (e) { }
 
     setPhotos({
       '01': null, '02': null, '03': null, '04': null, '05': null, '06': null, '07': null,
@@ -148,45 +148,45 @@ export default function App() {
           privateSaleToken: params.get('PrivateSaleToken') || null
         })
       })
-      .then(r => r.json())
-      .then(async (checkoutData) => {
-        let report = checkoutData.report;
-        if (!report) {
-          const reportRes = await fetch(`${API_BASE}/api/reports/${savedInspectionId}`);
-          const data = await reportRes.json();
-          report = data.report;
-        }
-
-        if (report) {
-          setAnalysisResults(report);
-          if (report.user_info?.email) {
-            setUserInfo({
-              name: report.user_info.name || savedName,
-              email: report.user_info.email || savedEmail
-            });
+        .then(r => r.json())
+        .then(async (checkoutData) => {
+          let report = checkoutData.report;
+          if (!report) {
+            const reportRes = await fetch(`${API_BASE}/api/reports/${savedInspectionId}`);
+            const data = await reportRes.json();
+            report = data.report;
           }
-          try {
-            localStorage.setItem('carsinsure_analysis_results', JSON.stringify(report));
-            localStorage.setItem('carsinsure_step', 'unlocked');
-            localStorage.setItem('carsinsure_active_inspection_id', savedInspectionId);
-          } catch (e) {}
-        }
-        setIsVerifyingPayment(false);
-        setCurrentStepState('unlocked');
-        toast.success('Payment Verified! Full Report Unlocked & PDF Dispatched.', { id: 'payment-verified-toast' });
-      })
-      .catch(err => {
-        console.error('Failed loading paid inspection:', err);
-        setIsVerifyingPayment(false);
-        setCurrentStepState('unlocked');
-      });
+
+          if (report) {
+            setAnalysisResults(report);
+            if (report.user_info?.email) {
+              setUserInfo({
+                name: report.user_info.name || savedName,
+                email: report.user_info.email || savedEmail
+              });
+            }
+            try {
+              localStorage.setItem('carsinsure_analysis_results', JSON.stringify(report));
+              localStorage.setItem('carsinsure_step', 'unlocked');
+              localStorage.setItem('carsinsure_active_inspection_id', savedInspectionId);
+            } catch (e) { }
+          }
+          setIsVerifyingPayment(false);
+          setCurrentStepState('unlocked');
+          toast.success('Payment Verified! Full Report Unlocked & PDF Dispatched.', { id: 'payment-verified-toast' });
+        })
+        .catch(err => {
+          console.error('Failed loading paid inspection:', err);
+          setIsVerifyingPayment(false);
+          setCurrentStepState('unlocked');
+        });
     } else if (paymentStatus === 'failed' || (statusParam && statusParam !== '0')) {
       if (paymentProcessedRef.current) return;
       paymentProcessedRef.current = true;
       toast.error('Payment was cancelled or not completed. Please try again.', { id: 'payment-failed-toast' });
       try {
         localStorage.setItem('carsinsure_step', 'paywall');
-      } catch (e) {}
+      } catch (e) { }
       setCurrentStepState('paywall');
       window.history.replaceState({ step: 'paywall' }, document.title, window.location.pathname);
     } else {
@@ -223,7 +223,7 @@ export default function App() {
                   setCurrentStepState('results');
                   try {
                     localStorage.setItem('carsinsure_step', 'results');
-                  } catch (e) {}
+                  } catch (e) { }
                   window.history.replaceState({ step: 'results' }, '', window.location.pathname);
                 }
               })
@@ -299,9 +299,9 @@ export default function App() {
 
     try {
       const base64Data = await compressImage(file);
-      setPhotos(prev => ({ 
-        ...prev, 
-        [id]: { url: base64Data, filename: `IMAGE_${id}` } 
+      setPhotos(prev => ({
+        ...prev,
+        [id]: { url: base64Data, filename: `IMAGE_${id}` }
       }));
       toast.success(`Photo ${id} captured!`);
     } catch (err) {
@@ -383,7 +383,7 @@ export default function App() {
           localStorage.setItem('carsinsure_vehicle_data', JSON.stringify(vehicleData));
           localStorage.setItem('carsinsure_user_name', payloadUserInfo.name);
           localStorage.setItem('carsinsure_user_email', payloadUserInfo.email);
-        } catch (e) {}
+        } catch (e) { }
         setCurrentStep('results');
         toast.success(`AI Visual Analysis Complete! Report dispatched to ${payloadUserInfo.email}`);
       } else {
@@ -401,13 +401,14 @@ export default function App() {
   const currentStepIndex = STEPS.findIndex(s => s.id === currentStep);
 
   return (
-    <div className="min-h-screen bg-[#F1F5F9] text-slate-900 font-sans antialiased flex flex-col items-center justify-start pt-14 sm:pt-16 pb-16 overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen bg-[#F1F5F9] text-slate-900 font-sans antialiased flex flex-col items-center justify-start pt-15 xl:pt-[59.16px] pb-16 overflow-x-hidden w-full max-w-full">
       {/* Top Header */}
       <Header setCurrentStep={setCurrentStep} currentStep={currentStep} />
-
+      <h1 className="mt-4 sm:mt-8 text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight leading-tight">Free AI Car Rental Damage Scanner</h1>
       {/* Stepper Navigation Bar (#022a5b royal midnight gradient) */}
       <div className="w-full max-w-6xl px-3 sm:px-8 pt-4 sm:pt-6 pb-2">
         <div className="bg-white rounded-2xl p-1.5 sm:p-2.5 border border-slate-200/90 shadow-xs flex items-center justify-between gap-1 sm:gap-2">
+
           {STEPS.map((step, idx) => {
             const Icon = step.icon;
             const isPassed = currentStepIndex > idx;
@@ -415,36 +416,32 @@ export default function App() {
 
             return (
               <React.Fragment key={step.id}>
-                <div 
-                  className={`flex-1 flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2.5 py-1.5 sm:py-2 px-2 sm:px-4 rounded-xl transition-all ${
-                    isCurrent 
-                      ? 'bg-gradient-to-r from-[#022a5b] to-[#04428e] text-white font-extrabold shadow-md shadow-[#022a5b]/20' 
-                      : isPassed 
-                        ? 'text-[#022a5b] bg-[#022a5b]/10 font-bold' 
+                <div
+                  className={`flex-1 flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2.5 py-1.5 sm:py-2 px-2 sm:px-4 rounded-xl transition-all ${isCurrent
+                      ? 'bg-linear-to-r from-[#022a5b] to-[#04428e] text-white font-extrabold shadow-md shadow-[#022a5b]/20'
+                      : isPassed
+                        ? 'text-[#022a5b] bg-[#022a5b]/10 font-bold'
                         : 'text-slate-400 bg-transparent opacity-70'
-                  }`}
+                    }`}
                 >
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                    isCurrent 
-                      ? 'bg-white text-[#022a5b]' 
-                      : isPassed 
-                        ? 'bg-[#022a5b] text-white' 
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${isCurrent
+                      ? 'bg-white text-[#022a5b]'
+                      : isPassed
+                        ? 'bg-[#022a5b] text-white'
                         : 'bg-slate-200 text-slate-500'
-                  }`}>
-                    {isPassed ? <Check className="w-3 h-3 stroke-[3]" /> : step.stepNum}
+                    }`}>
+                    {isPassed ? <Check className="w-3 h-3 stroke-3" /> : step.stepNum}
                   </div>
-                  <span className={`text-[11px] md:text-xs truncate hidden sm:inline ${
-                    isCurrent ? 'text-white font-bold' : isPassed ? 'text-[#022a5b] font-semibold' : 'text-slate-500 font-medium'
-                  }`}>
+                  <span className={`text-[11px] md:text-xs truncate hidden sm:inline ${isCurrent ? 'text-white font-bold' : isPassed ? 'text-[#022a5b] font-semibold' : 'text-slate-500 font-medium'
+                    }`}>
                     <span className="hidden lg:inline">{step.label}</span>
                     <span className="inline lg:hidden">{step.shortLabel || step.label}</span>
                   </span>
                 </div>
 
                 {idx < STEPS.length - 1 && (
-                  <div className={`w-2 sm:w-6 h-0.5 rounded-full shrink-0 transition-all ${
-                    currentStepIndex > idx ? 'bg-[#022a5b]' : 'bg-slate-200'
-                  }`} />
+                  <div className={`w-2 sm:w-6 h-0.5 rounded-full shrink-0 transition-all ${currentStepIndex > idx ? 'bg-[#022a5b]' : 'bg-slate-200'
+                    }`} />
                 )}
               </React.Fragment>
             );
@@ -454,7 +451,6 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="w-full max-w-6xl px-3 sm:px-8 pt-3 sm:pt-4">
-        
         {/* PAYMENT VERIFICATION IN-FLIGHT LOADER */}
         {isVerifyingPayment && (
           <InspectionLoader type="payment_verification" vehicleData={vehicleData} />
@@ -467,7 +463,7 @@ export default function App() {
 
         {/* STEP 1: 14-PHOTO CAPTURE CHECKLIST */}
         {!isVerifyingPayment && !isUploading && currentStep === 'checklist' && (
-          <PhotoChecklist 
+          <PhotoChecklist
             vehicleData={vehicleData}
             setVehicleData={setVehicleData}
             photos={photos}
@@ -484,7 +480,7 @@ export default function App() {
 
         {/* STEP 2: OFFICIAL AI REPORT & DOWNLOADABLE CERTIFICATE (ACTIVE 2-STEP FLOW) */}
         {!isVerifyingPayment && !isUploading && (currentStep === 'results' || currentStep === 'unlocked') && (
-          <UnlockedReport 
+          <UnlockedReport
             vehicleData={vehicleData}
             userInfo={userInfo}
             analysisResults={analysisResults}

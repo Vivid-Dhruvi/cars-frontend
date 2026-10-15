@@ -165,13 +165,12 @@ export default function PhotoChecklist({
 
   return (
     <>
-      <div className="flex flex-col gap-4 sm:gap-5">
+      <div className="flex flex-col gap-4 sm:gap-5">      
       {/* ── Rich Visible #022a5b Midnight Navy Hero Guidance Banner ── */}
       <div className="gradient-navy-hero rounded-2xl sm:rounded-3xl p-4 sm:p-7 text-white shadow-md flex flex-col gap-4 sm:gap-6 relative overflow-hidden isolate">
         {/* Glow ambient highlight */}
         <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none translate-x-1/4 -translate-y-1/4" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-300/15 rounded-full blur-2xl pointer-events-none -translate-x-1/4 translate-y-1/4" />
-        
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-300/15 rounded-full blur-2xl pointer-events-none -translate-x-1/4 translate-y-1/4" />          
         {/* Desktop Layout: Left side has Badge, Title, Text, Button. Right side has Metric Overview Card */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 sm:gap-6 relative z-10">
           <div className="space-y-3 flex-1">
@@ -196,9 +195,9 @@ export default function PhotoChecklist({
               </div>
             </div>
 
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-white leading-tight">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-white leading-tight">
               Detailed guidelines for AI-driven visual inspection
-            </h1>
+            </h2>
             <div className="text-blue-100/90 text-xs sm:text-sm max-w-2xl leading-relaxed space-y-1">
               <p>
                 To ensure the most accurate, reliable, and automated physical damage analysis, it is recommended to follow a structured, standardized photography protocol.

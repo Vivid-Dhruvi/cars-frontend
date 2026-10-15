@@ -659,7 +659,7 @@ export default function CarMapResults({
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
                         {/* Dedicated Clear High-Contrast Number Badge OUTSIDE the image */}
-                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#022a5b] to-[#04428e] text-white font-black text-xs sm:text-sm flex items-center justify-center shrink-0 shadow-xs ring-2 ring-[#022a5b]/15">
+                        <div className="w-8 h-8 rounded-xl bg-linear-to-br from-[#022a5b] to-[#04428e] text-white font-black text-xs sm:text-sm flex items-center justify-center shrink-0 shadow-xs ring-2 ring-[#022a5b]/15">
                           {idx + 1}
                         </div>
 
@@ -716,7 +716,7 @@ export default function CarMapResults({
               })}
 
               {/* Clean #022a5b Free Inspection Certificate CTA Card */}
-              <div className="bg-gradient-to-br from-[#022a5b]/8 via-white to-[#022a5b]/12 text-slate-900 rounded-3xl p-5 sm:p-7 shadow-xs flex flex-col gap-4 border border-[#022a5b]/20 relative overflow-hidden">
+              <div className="bg-linear-to-br from-[#022a5b]/8 via-white to-[#022a5b]/12 text-slate-900 rounded-3xl p-5 sm:p-7 shadow-xs flex flex-col gap-4 border border-[#022a5b]/20 relative overflow-hidden">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="w-4 h-1 bg-[#022a5b] rounded-full inline-block shrink-0"></span>
@@ -742,7 +742,7 @@ export default function CarMapResults({
                   <button 
                     onClick={handleDownloadPdf}
                     disabled={downloading}
-                    className="w-full sm:flex-1 min-h-12 sm:h-13 px-4 py-2.5 bg-gradient-to-r from-[#022a5b] via-[#033c80] to-[#022a5b] hover:from-[#033c80] hover:to-[#022a5b] text-white font-bold text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-[#022a5b]/20 transition-all cursor-pointer active:scale-98 disabled:opacity-50"
+                    className="w-full sm:flex-1 min-h-12 sm:h-13 px-4 py-2.5 bg-linear-to-r from-[#022a5b] via-[#033c80] to-[#022a5b] hover:from-[#033c80] hover:to-[#022a5b] text-white font-bold text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-[#022a5b]/20 transition-all cursor-pointer active:scale-98 disabled:opacity-50"
                   >
                     <Download className="w-4 h-4 text-white shrink-0" />
                     <span>{downloading ? 'Exporting PDF...' : 'Download Official PDF Certificate'}</span>

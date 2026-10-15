@@ -1,27 +1,12 @@
 import Link from 'next/link';
 import { ShieldAlert, ArrowLeft, ScanLine } from 'lucide-react';
+import Header from '@/components/Header';
 
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center antialiased">
-      {/* Exact Match App Header */}
-      <header className="fixed top-0 left-0 right-0 w-full bg-white border-b border-slate-200/90 px-3 sm:px-8 h-14 sm:h-16 flex items-center justify-between z-50 shadow-xs">
-        <Link 
-          href="/" 
-          aria-label="CarInsuRent AI Home"
-          className="flex flex-col items-start cursor-pointer text-left focus:outline-none shrink-0"
-        >
-          <img 
-            src="/car-rental-damage-scanner/logo-ai.svg?v=5" 
-            alt="CarInsuRent AI" 
-            className="h-5 sm:h-[26px] w-auto object-contain shrink-0" 
-          />
-          <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium tracking-tight mt-0.5 whitespace-nowrap pl-[27px] sm:pl-[35px]">
-            Automotive AI Visual Inspection
-          </span>
-        </Link>
-      </header>
-
+      {/* Exact Match Header */}
+      <Header />
       {/* Main 404 Center Section */}
       <main className="flex flex-col items-center justify-center text-center max-w-lg px-4 pt-16">
         {/* Shield Icon & 404 Badge */}
