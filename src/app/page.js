@@ -401,10 +401,12 @@ export default function App() {
   const currentStepIndex = STEPS.findIndex(s => s.id === currentStep);
 
   return (
-    <div className="min-h-screen bg-[#F1F5F9] text-slate-900 font-sans antialiased flex flex-col items-center justify-start pt-15 xl:pt-[59.16px] pb-16 overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen bg-[#F1F5F9] text-slate-900 font-sans antialiased flex flex-col items-center justify-start pt-15 xl:pt-[60px] pb-16 overflow-x-hidden w-full max-w-full">
       {/* Top Header */}
       <Header setCurrentStep={setCurrentStep} currentStep={currentStep} />
-      <h1 className="mt-4 sm:mt-8 text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight leading-tight">Free AI Car Rental Damage Scanner</h1>
+      <h1 className="mt-4 sm:mt-8 text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight leading-tight text-center text-[#022A5B] px-4">
+        Free AI Car Rental Damage Scanner
+      </h1>
       {/* Stepper Navigation Bar (#022a5b royal midnight gradient) */}
       <div className="w-full max-w-6xl px-3 sm:px-8 pt-4 sm:pt-6 pb-2">
         <div className="bg-white rounded-2xl p-1.5 sm:p-2.5 border border-slate-200/90 shadow-xs flex items-center justify-between gap-1 sm:gap-2">

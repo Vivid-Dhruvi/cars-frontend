@@ -95,10 +95,10 @@ function DesktopMenuItem({ item }) {
         )}
       </a>
 
-      {/* Dropdown Menu matching exact WordPress word wrap and parent width */}
+      {/* Dropdown Menu attached flush to header with no detached gap */}
       {hasChildren && open && (
         <ul
-          className="max-w-56 absolute top-full left-0 mt-2.5 py-2.5 px-0 bg-[#183B56] z-50 text-left list-none shadow-none rounded-none border-0 before:content-[''] before:absolute before:-top-2.5 before:left-0 before:w-full before:h-2.5"
+          className="max-w-56 absolute top-full left-0 mt-0 py-2.5 px-0 bg-[#183B56] z-50 text-left list-none shadow-lg rounded-b-md border-0"
         >
           {item.children.map((child) => (
             <li key={child.href} className="m-0 list-none">
@@ -229,24 +229,27 @@ export default function Header({ setCurrentStep, currentStep }) {
 
   return (
     <>
-      <header className="fixed top-0 left-0 w-full bg-white z-50 h-15 xl:h-[59.16px] py-2.5 xl:py-4.25 box-border">
-        {/* Inner Container: 90% width, max-width 1370px, 15px padding, height 25.16px */}
-        <div className="w-full xl:w-[90%] max-w-342.5 mx-auto px-3.75 h-10 xl:h-[25.16px] flex items-center justify-between relative box-border">
+      <header className="fixed top-0 left-0 w-full bg-white z-50 h-15 xl:h-[60px] border-b border-slate-200/90 shadow-xs flex items-center box-border">
+        {/* Inner Container: 90% width, max-width 1370px, 15px padding */}
+        <div className="w-full xl:w-[90%] max-w-342.5 mx-auto px-3.75 h-full flex items-center justify-between relative box-border">
           
-          {/* Logo (.header-logo: 160px width, 25.16px height) */}
+          {/* Logo (.header-logo: Brand Logo Lockup with Automotive AI Visual Inspection) */}
           <div className="header-logo shrink-0 flex items-center">
             <a
               href="https://carinsurent.com/"
-              className="block cursor-pointer"
+              className="flex flex-col items-start cursor-pointer text-left focus:outline-none shrink-0"
               aria-label="CarInsuRent"
             >
               <img
                 src="/car-rental-damage-scanner/logo-ai.svg?v=5" 
-                alt="CarInsurent"
-                className="block w-40 h-[25.16px]"
+                alt="CarInsuRent AI"
+                className="h-5 sm:h-[24px] w-auto object-contain shrink-0"
                 width="160"
-                height="25.16"
+                height="24"
               />
+              <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium tracking-tight mt-0.5 whitespace-nowrap pl-[27px] sm:pl-[34px]">
+                Automotive AI Visual Inspection
+              </span>
             </a>
           </div>
 
