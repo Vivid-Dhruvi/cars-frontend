@@ -277,6 +277,36 @@ export default function AdminDashboardPage() {
 
   // Verify session on mount
   useEffect(() => {
+    // WordPress SSO: the WP admin page embeds this page with a one-time ticket in the URL fragment
+    // (#sso=...). Fragments are never sent to the server, and we remove it from the URL right away.
+    const ssoTicket = typeof window !== 'undefined' ? new URLSearchParams(window.location.hash.slice(1)).get('sso') : null;
+    if (ssoTicket) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      fetch(`${API_BASE}/api/admin/sso/wordpress`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticket: ssoTicket })
+      })
+        .then(res => res.json().then(data => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+          if (ok && data.success && data.token) {
+            sessionStorage.setItem('carsinsure_admin_token', data.token);
+            localStorage.setItem('carsinsure_admin_token', data.token);
+            setIsAuthenticated(true);
+            fetchInspections(data.token);
+          } else {
+            setIsAuthenticated(false);
+            setLoginError(data.error || 'WordPress sign-in failed. Reload the page in WordPress admin.');
+          }
+        })
+        .catch(() => {
+          setIsAuthenticated(false);
+          setLoginError('Network error connecting to authentication server.');
+        })
+        .finally(() => setCheckingAuth(false));
+      return;
+    }
+
     const savedToken = typeof window !== 'undefined' ? (sessionStorage.getItem('carsinsure_admin_token') || localStorage.getItem('carsinsure_admin_token')) : null;
     if (!savedToken) {
       setCheckingAuth(false);
