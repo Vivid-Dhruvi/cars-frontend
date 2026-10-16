@@ -789,7 +789,7 @@ export default function AdminDashboardPage() {
 
           <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
             <span>Secure Admin Session</span>
-            <Link href="/" className="hover:text-slate-700 transition-colors font-semibold">
+            <Link href="/" target="_blank" rel="noopener noreferrer" className="hover:text-slate-700 transition-colors font-semibold">
               ← Back to Scanner
             </Link>
           </div>
@@ -835,6 +835,8 @@ export default function AdminDashboardPage() {
           </button>
           <Link
             href="/"
+            target="_blank"
+            rel="noopener noreferrer"
             className="px-2.5 py-1.5 rounded-xl bg-[#022a5b] hover:bg-[#022a5b]/90 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -1228,7 +1230,7 @@ export default function AdminDashboardPage() {
               <span className="hidden sm:inline">Sign Out</span>
             </button>
 
-            <Link href="/" className="min-h-11 shrink-0 px-4 bg-[#022a5b] hover:bg-[#022a5b]/90 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs transition-colors cursor-pointer">
+            <Link href="/" target="_blank" rel="noopener noreferrer" className="min-h-11 shrink-0 px-4 bg-[#022a5b] hover:bg-[#022a5b]/90 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs transition-colors cursor-pointer">
               <ArrowLeft className="w-3.5 h-3.5" /> 
               <span>Back to Scanner</span>
             </Link>
